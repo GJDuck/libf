@@ -186,6 +186,10 @@ int main(void)
     TEST(verify(between(str, 13, 13+26)));
     TEST(compare(between(str, 13, 13+26),
         string("ABCDEFGHIJKLMNOPQRSTUVWXYZ")) == 0);
+    TEST(find(str, '!') == 11);
+    TEST(find(str, '@') < 0);
+    TEST(find(str, 33, [] (int a, char32_t b) { return (a == b); }) == 11);
+    TEST(find(str, 33, [] (int a, char32_t b) { return (a > b); }) == 5);
     TEST(foldl(str, (char32_t)0,
         [] (char32_t x, char32_t y) { return (x > y? x: y); }) == 'z');
     TEST(verify(map(str, [] (char32_t c) { return 'X'; })));
@@ -207,13 +211,25 @@ int main(void)
     // Vectors:
 {
     auto xs = vector<int>();
+    auto ys = vector(string("Hello World!"));
+    auto zs = vector(cons(1.1f, cons(2.4f, cons(3.3f, list<float>()))));
+    const int data[] = {7, 5, 4, 3};
+    auto ws = vector(data, sizeof(data) / sizeof(data[0]));
 
     for (int i = 0; i < 300; i++)
         xs = push_back(xs, i);
 
     printf("\n\33[33mxs = %s\33[0m\n", cstr(show(xs)));
+    printf("\33[33mys = %s\33[0m\n", cstr(show(ys)));
+    printf("\33[33mzs = %s\33[0m\n", cstr(show(zs)));
     TEST(verify(xs));
+    TEST(verify(ys));
+    TEST(verify(zs));
+    TEST(verify(ws));
     TEST(length(xs) == 300);
+    TEST(length(ys) == length(string("Hello World!")));
+    TEST(length(zs) == 3);
+    TEST(length(ws) == 4);
     TEST(verify(push_front(xs, 333)));
     TEST(lookup(push_front(xs, 333), 0) == 333);
     TEST(verify(push_back(xs, 333)));
@@ -223,10 +239,13 @@ int main(void)
     TEST(verify(pop_back(xs)));
     TEST(length(pop_back(xs)) == 299);
     TEST(length(append(xs, xs)) == 600);
+    TEST(length(append(ws, ws)) == 8);
+    TEST(length(append(xs, ws)) == length(append(ws, xs)));
     TEST(verify(split(xs, 123).fst));
     TEST(verify(split(xs, 123).snd));
     TEST(compare(append(split(xs, 123).fst, split(xs, 123).snd), xs) == 0);
     TEST(foldl(xs, 0, [] (int x, int y) { return x+y; }) == 150*299);
+    TEST(foldl(ws, 0, [] (int x, int y) { return x+y; }) == 19);
     TEST(foldr(xs, 0, [] (int x, int y) { return x+y; }) == 150*299);
     TEST(lookup(map<float>(xs, [] (int x) { return (float)x; }), 123) ==
         123.0f);
@@ -235,6 +254,8 @@ int main(void)
     TEST(compare(xs, xs) == 0);
     TEST(compare(xs, push_front(xs, 100)) < 0);
     TEST(compare(xs, push_front(xs, -100)) > 0);
+    TEST(compare(map<int>(zs, [] (float x) { return (int)x-1; }),
+        split(xs, 3).fst) == 0);
 }
 
     // Tuples:

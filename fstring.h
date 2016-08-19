@@ -53,6 +53,7 @@ extern PURE _Seq _string_init_with_char(char32_t c);
 extern PURE char *_string_cstring(_Seq _s);
 extern PURE List<char32_t> _string_list(_Seq s);
 extern PURE char32_t _string_lookup(_Seq _s, size_t _idx);
+extern PURE char32_t _string_search(_Seq _s, size_t _idx);
 extern PURE _Seq _string_append_char(_Seq _s, char32_t _c);
 extern PURE _Seq _string_append_cstring(_Seq _s, const char *_str);
 extern PURE Result<_Seq, _Seq> _string_split(_Seq _s, size_t _idx);
@@ -62,6 +63,8 @@ extern PURE _Seq _string_between(_Seq _s, size_t _lidx, size_t _ridx);
 extern PURE _Seq _string_insert(_Seq _s, size_t _idx, _Seq _t);
 extern PURE int _string_frag_compare(void *, _Frag _a, size_t _idx1,
     _Frag _b, size_t _idx2);
+extern PURE Any _string_frag_find(void *_c, _Frag _a, Any _state);
+extern PURE Any _string_frag_find_2(void *_data, _Frag _a, Any _state);
 
 /*
  * str = string()
@@ -145,12 +148,57 @@ inline PURE size_t length(String _str)
 }
 
 /*
- * Lookup.
+ * Lookup (aborts if OOB).
  * O(log(n)).
  */
 inline PURE char32_t lookup(String _s, size_t _idx)
 {
     return _string_lookup(_s._impl, _idx);
+}
+
+/*
+ * Search (returns 0 if OOB).
+ * O(log(n)).
+ */
+inline PURE char32_t search(String _s, size_t _idx)
+{
+    return _string_search(_s._impl, _idx);
+}
+
+/*
+ * Find.
+ * O(n).
+ */
+inline PURE ssize_t find(String _s, char32_t _c)
+{
+    bool (*_stop)(Any) =
+        [](Any _state) -> bool { return (cast<ssize_t>(_state) < 0); };
+    Any _r0 = _seq_search_left(_s._impl, cast<void *>(_c), cast<Any>(0),
+        _string_frag_find, _stop);
+    return (cast<ssize_t>(_r0) < 0? -cast<ssize_t>(_r0): -1);
+}
+
+/*
+ * Find.
+ * O(n).
+ */
+template <typename _T, typename _F>
+inline PURE ssize_t find(String _s, _T _arg, _F _func)
+{
+    bool (*_stop)(Any) =
+        [](Any _state) -> bool { return (cast<ssize_t>(_state) < 0); };
+    bool (*_test)(void *, Any, char32_t) =
+        [](void *_func_0, Any _a0, char32_t _c)
+    {
+        _F *_func_1 = (_F *)_func_0;
+        _T _a = cast<_T>(_a0);
+        return (*_func_1)(_a, _c);
+    };
+    Result<Any, void *, void *> _data = {cast<Any>(_arg), cast<void *>(&_func),
+        cast<void *>(_test)};
+    Any _r0 = _seq_search_left(_s._impl, cast<void *>(&_data), cast<Any>(0),
+        _string_frag_find_2, _stop);
+    return (cast<ssize_t>(_r0) < 0? -cast<ssize_t>(_r0): -1);
 }
 
 /*

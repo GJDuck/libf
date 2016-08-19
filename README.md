@@ -19,7 +19,7 @@ equivalent code is the following:
     for (size_t i = 0; i < 10; i++)
         xs = push_back(xs, i);
 
-Unlike stdlib++, where each xs is an *immutable* object, making the following
+Unlike stdlib++, here each xs is an *immutable* object, making the following
 code possible:
 
     Vector<size_t> xs;
@@ -50,14 +50,44 @@ LibF currently provides the following basic data types:
 Each of these is immutable, and has complexity similar to that of the stdlib++
 equivalent.
 
+Quick Programming Guide:
+------------------------
+
+Functions work essentially the same way as normal C:
+
+    f(1, 2, 3);
+
+By default functions are considered *impure*, meaning that they can have side
+effects.  To declare a function as *pure* (side effect free), use the "PURE"
+keyword in the function declaration:
+
+    PURE int f(int x, int y, int z);
+
+*NOTE*: I had wanted to use "pure" (lowercase) but the C preprocessor does not
+like this.
+
+We borrow the lamda sytax from C++11.  One can use this to create anonymous
+functions in the usual way:
+
+    auto f = [] (int x) -> int { return x+1};
+
+The libf library contains the set usual FP operations over lists, maps, etc.
+For example:
+
+    // Capitialize a string via a list:
+    List<char32_t> xs = list(string("Hello World!"));
+    xs = map<char32_t>(toupper, xs);
+    printf("%s\n", cstr(string(xs)));
+
+
 Other features:
 ---------------
 
-* *Garbage Collected* libf uses automatic memory management provided by the
+* *Garbage Collected*: libf uses automatic memory management provided by the
   Boehm garbage collector.
-* *Strict* C and C++ are strict (not lazy) languages, so libf is also strict.
-* *Discriminated Union Types* in the form of the Multi pointer type.
-* *Small binaries* The implementation handles polymorphism by casting to void.
+* *Strict*: C and C++ are strict (not lazy) languages, so libf is also strict.
+* *Discriminated Union Types*: in the form of the Multi pointer type.
+* *Small binaries*: The implementation handles polymorphism by casting to void.
 
 C++ subset:
 -----------

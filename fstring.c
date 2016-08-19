@@ -408,6 +408,16 @@ extern PURE char32_t _string_lookup(seq_t s, size_t idx)
 }
 
 /*
+ * String search.
+ */
+extern PURE char32_t _string_search(seq_t s, size_t idx)
+{
+    if (idx >= _seq_length(s))
+        return '\0';
+    return _string_lookup(s, idx);
+}
+
+/*
  * String append char.
  */
 extern PURE seq_t _string_append_char(seq_t s, char32_t c)
@@ -598,6 +608,50 @@ extern PURE int _string_frag_compare(void *unused, frag_t a, size_t idx1,
         idx2++;
     }
     return 0;
+}
+
+/*
+ * String fragment find.
+ */
+extern PURE Any _string_frag_find(void *c0, frag_t a, Any state)
+{
+    const str_t str = cast<str_t>(a);
+    char32_t c = cast<char32_t>(c0);
+    ssize_t idx = cast<size_t>(state);
+
+    size_t i = cstr_index(str->data, 0);
+    for (; i < str->len; )
+    {
+        char32_t d = char32_decode(str->data + i);
+        if (d == c)
+            return cast<Any>(-idx);
+        i += char32_size(d);
+        idx++;
+    }
+    return cast<Any>(idx);
+}
+
+/*
+ * String fragment find.
+ */
+extern PURE Any _string_frag_find_2(void *data0, frag_t a, Any state)
+{
+    const str_t str = cast<str_t>(a);
+    Result<Any, void *, void *> *data =
+        cast<Result<Any, void *, void *> *>(data0);
+    ssize_t idx = cast<size_t>(state);
+    auto test = (bool (*)(void *, Any, char32_t))data->third;
+
+    size_t i = cstr_index(str->data, 0);
+    for (; i < str->len; )
+    {
+        char32_t d = char32_decode(str->data + i);
+        if (test(data->snd, data->fst, d))
+            return cast<Any>(-idx);
+        i += char32_size(d);
+        idx++;
+    }
+    return cast<Any>(idx);
 }
 
 /*

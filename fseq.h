@@ -49,6 +49,8 @@ static PURE inline _Seq _seq_empty(void)
 extern PURE bool _seq_is_empty(_Seq _s);
 extern PURE size_t _seq_length(_Seq _s);
 extern PURE Result<_Frag, size_t> _seq_lookup(_Seq _s, size_t _idx);
+extern PURE Any _seq_search_left(_Seq _s, void *_data, Any _state,
+    Any (*_next)(void *, _Frag, Any), bool (*_stop)(Any));
 extern PURE _Seq _seq_push_front(_Seq _s, _Frag _frag);
 extern PURE _Seq _seq_replace_front(_Seq _s, _Frag _frag);
 extern PURE Result<_Seq, _Frag> _seq_pop_front(_Seq _s);
@@ -67,7 +69,7 @@ extern PURE Any _seq_foldl(_Seq _s, Any _arg, Any (*_f)(void *, Any, _Frag),
     void *_data);
 extern PURE Any _seq_foldr(_Seq _s, Any _arg, Any (*_f)(void *, Any, _Frag),
     void *_data);
-extern PURE _Seq _seq_map(_Seq _s, _Frag (*_f)(void *, _Frag), void *data);
+extern PURE _Seq _seq_map(_Seq _s, _Frag (*_f)(void *, _Frag), void *_data);
 extern PURE bool _seq_verify(_Seq _s);
 
 }               /* namespace F */

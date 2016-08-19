@@ -88,6 +88,35 @@ static inline void vec_copy(vec_t vec_dst, vec_t vec_src, size_t idx_dst,
 }
 
 /*
+ * Vector init.
+ */
+static PURE seq_t _vector_init_2(seq_t s, const void *a, size_t size,
+    size_t len)
+{
+    for (size_t i = 0; i < len; )
+    {
+        size_t frag_len = (vec_size(size, len-i) <= VECTOR_FRAG_MAX_SIZE?
+            len-i: 1);
+        size_t frag_size = vec_size(size, frag_len);
+        vec_t vec = vec_malloc(frag_size, size);
+        vec->len = frag_len;
+        void *elems = vec_elem_ptr(vec, size, 0);
+        memcpy(elems, (char *)a + (i * size), size * frag_len);
+        i += frag_len;
+        s = _seq_push_back(s, cast<frag_t>(vec));
+    }
+    return s;
+}
+
+/*
+ * Vector init.
+ */
+extern PURE seq_t _vector_init(const void *a, size_t size, size_t len)
+{
+    return _vector_init_2(_SEQ_EMPTY, a, size, len);
+}
+
+/*
  * Push back.
  */
 extern PURE seq_t _vector_push_back(seq_t s, size_t size, Any elem)

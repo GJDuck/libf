@@ -165,6 +165,10 @@ static tree_t tree_map(tree_t t, frag_t (*f)(void *, frag_t), void *data);
 static bool seq_verify(seq_t s, size_t level);
 static bool dig_verify(dig_t s, size_t level);
 static bool tree_verify(tree_t s, size_t level);
+static PURE Any dig_search_left(dig_t s, void *data, Any state,
+    Any (*next)(void *, frag_t, Any), bool (*stop)(Any));
+static PURE Any tree_search_left(tree_t s, void *data, Any state,
+    Any (*next)(void *, frag_t, Any), bool (*stop)(Any));
 
 /*
  * Node constructors.
@@ -2184,4 +2188,125 @@ extern PURE int _seq_compare(seq_t s, seq_t t, void *data,
     return 1;
 }
 
+/*
+ * Search.
+ */
+extern PURE Any _seq_search_left(seq_t s, void *data, Any state,
+    Any (*next)(void *, frag_t, Any), bool (*stop)(Any))
+{
+    switch (index(s))
+    {
+        case SEQ_NIL:
+            return state;
+        case SEQ_SINGLE:
+        {
+            seq_single_t ss = get<seq_single_s>(s);
+            return tree_search_left(ss->t[0], data, state, next, stop);
+        }
+        case SEQ_DEEP:
+        {
+            seq_deep_t sd = get<seq_deep_s>(s);
+            state = dig_search_left(sd->l, data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = _seq_search_left(sd->m, data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = dig_search_left(sd->r, data, state, next, stop);
+            return state;
+        }
+        default:
+            error_bad_tree();
+    }
 }
+
+static PURE Any dig_search_left(dig_t s, void *data, Any state,
+    Any (*next)(void *, frag_t, Any), bool (*stop)(Any))
+{
+    switch (index(s))
+    {
+        case DIG_1:
+        {
+            dig1_t s1 = get<dig1_s>(s);
+            return tree_search_left(s1->t[0], data, state, next, stop);
+        }
+        case DIG_2:
+        {
+            dig2_t s2 = get<dig2_s>(s);
+            state = tree_search_left(s2->t[0], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s2->t[1], data, state, next, stop);
+            return state;
+        }
+        case DIG_3:
+        {
+            dig3_t s3 = get<dig3_s>(s);
+            state = tree_search_left(s3->t[0], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s3->t[1], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s3->t[2], data, state, next, stop);
+            return state;
+        }
+        case DIG_4:
+        {
+            dig4_t s4 = get<dig4_s>(s);
+            state = tree_search_left(s4->t[0], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s4->t[1], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s4->t[2], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s4->t[3], data, state, next, stop);
+            return state;
+        }
+        default:
+            error_bad_tree();
+    }
+}
+
+static PURE Any tree_search_left(tree_t s, void *data, Any state,
+    Any (*next)(void *, frag_t, Any), bool (*stop)(Any))
+{
+    switch (index(s))
+    {
+        case TREE_LEAF:
+        {
+            frag_t sl = get<frag_s>(s);
+            return next(data, sl, state);
+        }
+        case TREE_2:
+        {
+            tree2_t s2 = get<tree2_s>(s);
+            state = tree_search_left(s2->t[0], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s2->t[1], data, state, next, stop);
+            return state;
+        }
+        case TREE_3:
+        {
+            tree3_t s3 = get<tree3_s>(s);
+            state = tree_search_left(s3->t[0], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s3->t[1], data, state, next, stop);
+            if (stop(state))
+                return state;
+            state = tree_search_left(s3->t[2], data, state, next, stop);
+            return state;
+        }
+        default:
+            error_bad_tree();
+    }
+}
+
+}
+
+

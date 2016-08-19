@@ -38,6 +38,7 @@
 namespace F
 {
 
+extern PURE _Seq _vector_init(const void *_a, size_t _size, size_t _len);
 extern PURE _Seq _vector_push_back(_Seq _s, size_t _size, Any _elem);
 extern PURE _Seq _vector_pop_back(_Seq _s, size_t _size);
 extern PURE _Seq _vector_push_front(_Seq _s, size_t _size, Any _elem);
@@ -65,6 +66,52 @@ inline PURE Vector<_T> vector(void)
 {
     Vector<_T> _v = {_SEQ_EMPTY};
     return _v;
+}
+
+/*
+ * Constructor.
+ * O(n).
+ */
+template <typename _T>
+inline PURE Vector<_T> vector(const _T *_a, size_t _len)
+{
+    Vector<_T> _v = {_vector_init(cast<const void *>(_a), sizeof(_T), _len)};
+    return _v;
+}
+
+/*
+ * Constructor.
+ * O(n).
+ */
+inline PURE Vector<char32_t> vector(String _str)
+{
+    Vector<char32_t> _v = vector<char32_t>();
+    Vector<char32_t> (*_func_ptr)(Vector<char32_t>, char32_t) =
+        [](Vector<char32_t> _v0, char32_t _c) -> Vector<char32_t>
+    {
+        Vector<char32_t> _v = {_vector_push_back(_v0._impl, sizeof(char32_t),
+            cast<Any>(_c))};
+        return _v;
+    };
+    return foldl(_str, _v, _func_ptr);
+}
+
+/*
+ * Constructor.
+ * O(n).
+ */
+template <typename _T>
+inline PURE Vector<_T> vector(List<_T> _xs)
+{
+    Vector<_T> _v = vector<_T>();
+    Vector<_T> (*_func_ptr)(Vector<_T>, _T) =
+        [](Vector<_T> _v0, _T _x) -> Vector<_T>
+    {
+        Vector<_T> _v = {_vector_push_back(_v0._impl, sizeof(_T),
+            cast<Any>(_x))};
+        return _v;
+    };
+    return foldl(_xs, _v, _func_ptr);
 }
 
 /*
