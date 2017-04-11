@@ -259,7 +259,7 @@ Benchmarks:
 The following compares the time building various LibF and stdlib data
 structures:
 
-![Benchmarks1](http://comp.nus.edu.sg/~gregory/images/LibF_benchs1.pgn)
+![Benchmarks1](http://comp.nus.edu.sg/~gregory/images/LibF_benchs1.png)
 
 Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
 LibF is constructing a linked-list `F::List`, followed by `F::Vector`.
@@ -272,7 +272,7 @@ loop, i.e.:
     int sum = 0;
     for (auto x: xs) sum += x;
 
-![Benchmarks2](http://comp.nus.edu.sg/~gregory/images/LibF_benchs1.pgn)
+![Benchmarks2](http://comp.nus.edu.sg/~gregory/images/LibF_benchs2.png)
 
 Note that this uses iterators, which are slower for LibF data structures
 compared to the mutable standard library counterparts.  An alternative is to
