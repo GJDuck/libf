@@ -30,90 +30,41 @@
 #ifndef _FMAYBE_H
 #define _FMAYBE_H
 
-#include "fdefs.h"
 #include "fbase.h"
+
+#include "fmaybe_defs.h"
 
 namespace F
 {
 
-enum MaybeKind
-{
-    NOTHING = 0,
-    JUST    = 1
-};
-
-/*
- * Constructor (Nothing).
+/**
+ * Construct nothing.
  * O(1).
  */
 template <typename _T>
-inline PURE Maybe<_T> nothing(void)
+inline PURE Maybe<_T> maybe()
 {
-    Maybe<_T> _m = {nullptr};
-    return _m;
+    return (Nothing){};
 }
 
-/*
- * Constructor (Just).
+/**
+ * Construct a maybe with an element.
  * O(1).
  */
 template <typename _T>
-inline PURE Maybe<_T> just(_T _x)
+inline PURE Maybe<_T> maybe(const _T &_x)
 {
-    Maybe<_T> _m = {box(_x)};
-    return _m;
+    return _x;
 }
 
-/*
- * Constructor.
+/**
+ * Test if the maybe object is empty.
  * O(1).
  */
 template <typename _T>
-inline PURE Maybe<_T> maybe(const _T *_x)
+inline PURE bool empty(Maybe<_T> _m)
 {
-    Maybe<_T> _m = {_x};
-    return _m;
-}
-
-/*
- * Kind.
- * O(1).
- */
-template <typename _T>
-inline PURE MaybeKind kind(Maybe<_T> _m)
-{
-    return (MaybeKind)(_m._impl != nullptr);
-}
-
-/*
- * Is nothing test.
- * O(1).
- */
-template <typename _T>
-inline PURE bool is_nothing(Maybe<_T> _m)
-{
-    return (kind(_m) == NOTHING);
-}
-
-/*
- * Is just test.
- * O(1).
- */
-template <typename _T>
-inline PURE bool is_just(Maybe<_T> _m)
-{
-    return (kind(_m) == JUST);
-}
-
-/*
- * Get just value.
- * O(1).
- */
-template <typename _T>
-inline PURE _T get(Maybe<_T> _m)
-{
-    check(kind(_m) == JUST, "get nothing");
-    return *_m._impl;
+    return (index(_m) == NOTHING);
 }
 
 }               /* namespace F */

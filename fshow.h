@@ -30,25 +30,87 @@
 #ifndef _FSHOW_H
 #define _FSHOW_H
 
-#include "fdefs.h"
+#include "fbase.h"
+#include "fvalue.h"
+
+#include "fstring_defs.h"
 
 namespace F
 {
 
+/**
+ * Show a pointer.
+ */
 extern PURE String show(const void *_x);
+
+/**
+ * Show a Boolean.
+ */
 extern PURE String show(bool _x);
+
+/**
+ * Show a signed character.
+ */
 extern PURE String show(signed char _x);
+
+/**
+ * Show an unsigned character.
+ */
 extern PURE String show(unsigned char _x);
+
+/**
+ * Show a character.
+ */
 extern PURE String show(char _x);
+
+/**
+ * Show a short integer.
+ */
 extern PURE String show(short _x);
+
+/**
+ * Show an unsigned short integer.
+ */
 extern PURE String show(unsigned short _x);
+
+/**
+ * Show a signed integer.
+ */
 extern PURE String show(int _x);
+
+/**
+ * Show an unsigned integer.
+ */
 extern PURE String show(unsigned _x);
+
+/**
+ * Show a long signed integer.
+ */
 extern PURE String show(long int _x);
+
+/**
+ * Show a long unsigned integer.
+ */
 extern PURE String show(unsigned long int _x);
+
+/**
+ * Show a long long signed integer.
+ */
 extern PURE String show(long long int _x);
+
+/**
+ * Show a long long unsigned integer.
+ */
 extern PURE String show(unsigned long long int _x);
+
+/**
+ * Show a float.
+ */
 extern PURE String show(float _x);
+
+/**
+ * Show a double.
+ */
 extern PURE String show(double _x);
 
 }           /* namespace F */

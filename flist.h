@@ -30,11 +30,16 @@
 #ifndef _FLIST_H
 #define _FLIST_H
 
-#include "fdefs.h"
 #include "fbase.h"
 #include "fcompare.h"
 #include "flambda.h"
 #include "ftuple.h"
+#include "fvalue.h"
+
+#include "flist_defs.h"
+#include "fmap_defs.h"
+#include "fset_defs.h"
+#include "fstring_defs.h"
 
 namespace F
 {
@@ -45,174 +50,218 @@ typedef int (*_SortCompare)(const void *, const void *, void *);
 typedef int (*_SortCompare)(void *, const void *, const void *);
 #endif
 
+extern PURE List<char32_t> _string_list(_Seq s);
+
 /*
  * Low-level implementation.
  */
-extern PURE Any _list_last(_Node *_xs);
-extern PURE size_t _list_length(_Node *_xs);
-extern PURE _Node *_list_append(_Node *_xs, _Node *_ys);
-extern PURE _Node *_list_reverse(_Node *_xs);
-extern PURE _Node *_list_zip(_Node *xs, _Node *ys);
-extern PURE _Node *_list_sort(_Node *_xs, void *_data, _SortCompare _f);
-extern PURE _Node *_list_take(_Node *_xs, size_t _len);
-extern PURE _Node *_list_take_while(_Node *_xs, bool (*_f)(void *,Any),
+extern PURE List<Word> _list_last(List<Word> _xs);
+extern PURE size_t _list_length(List<Word> _xs);
+extern PURE List<Word> _list_append(List<Word> _xs, List<Word> _ys);
+extern PURE List<Word> _list_reverse(List<Word> _xs);
+extern PURE List<Word> _list_zip(List<Word> xs, List<Word> ys);
+extern PURE List<Word> _list_sort(List<Word> _xs, void *_data,
+    _SortCompare _f);
+extern PURE List<Word> _list_take(List<Word> _xs, size_t _len);
+extern PURE List<Word> _list_take_while(List<Word> _xs,
+    bool (*_f)(void *,Value<Word>), void *_data);
+extern PURE Value<Word> _list_foldl(List<Word> _xs,
+    Value<Word> (*_f)(void *,Value<Word>,Value<Word>), Value<Word> _a,
     void *_data);
-extern PURE Any _list_foldl(_Node *_xs, Any (*_f)(void *,Any,Any),
-    Any _a, void *_data);
-extern PURE Any _list_foldr(_Node *_xs, Any (*_f)(void *,Any,Any),
-    Any _a, void *_data);
-extern PURE _Node *_list_map(_Node *_xs,
-    Any (*_f)(void *,Any), void *_data);
-extern PURE _Node *_list_filter(_Node *_xs,
-    bool (*f)(void *,Any), void *_data);
-extern PURE int _list_compare(_Node *_xs, _Node *_ys,
-    int (*_f)(Any, Any));
-extern PURE String _list_show(_Node *_xs, String (*_f)(Any));
+extern PURE Value<Word> _list_foldr(List<Word> _xs,
+    Value<Word> (*_f)(void *,Value<Word>,Value<Word>), Value<Word> _a,
+    void *_data);
+extern PURE List<Word> _list_map(List<Word> _xs,
+    Value<Word> (*_f)(void *,Value<Word>), void *_data);
+extern PURE List<Word> _list_filter(List<Word> _xs,
+    bool (*f)(void *,Value<Word>), void *_data);
+extern PURE int _list_compare(List<Word> _xs, List<Word> _ys,
+    int (*_f)(Value<Word>, Value<Word>));
+extern PURE String _list_show(List<Word> _xs, String (*_f)(Value<Word>));
 
-/*
- * Constructor.
+/**
+ * Construct an empty list.
  * O(1).
  */
 template <typename _T>
-inline PURE List<_T> list(void)
+inline PURE List<_T> list()
 {
-    List<_T> _xs = {nullptr};
+    return (Nil){};
+}
+
+/**
+ * Constructor a list from a head and a tail.
+ * O(1).
+ */
+template <typename _T>
+inline PURE List<_T> list(const _T &_x, List<_T> _xs)
+{
+    return (Node<_T>){_x, _xs};
+}
+
+/**
+ * Construct a list from a set.
+ * O(n).
+ */
+template <typename _T>
+inline PURE List<_T> list(Set<_T> _s)
+{
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_unused, Value<Word> _k) -> Value<Word>
+    {
+        return _k;
+    };
+    List<_T> _xs = _bit_cast<List<_T>>(_tree_to_list(_s._impl, _func_ptr,
+        nullptr));
     return _xs;
 }
 
-/*
- * Test if empty.
+/**
+ * Construct a list from a map.
+ * O(n).
+ */
+template <typename _K, typename _V>
+inline PURE List<Tuple<_K, _V>> list(Map<_K, _V> _m)
+{
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_unused, Value<Word> _k) -> Value<Word>
+    {
+        return _k;
+    };
+    List<Tuple<_K, _V>> _xs = _bit_cast<List<Tuple<_K, _V>>>(
+        _tree_to_list(_m._impl, _func_ptr, nullptr));
+    return _xs;
+}
+
+/**
+ * Construct a list from a string.
+ * O(n).
+ */
+inline PURE List<char32_t> list(String _s)
+{
+    return _string_list(_s._impl);
+}
+
+/**
+ * Test if a list is empty.
  * O(1).
  */
 template <typename _T>
-inline PURE bool is_empty(List<_T> _xs)
+inline PURE bool empty(List<_T> _xs)
 {
-    return (_xs._impl == nullptr);
+    return (index(_xs) == NIL);
 }
 
-/*
- * Head.
+/**
+ * Get the head of a list.
  * O(1).
  */
 template <typename _T>
-inline PURE _T head(List<_T> _xs)
+inline PURE const _T &head(List<_T> _xs)
 {
-    check(_xs._impl != nullptr, "head []");
-    return cast<_T>(_xs._impl->val);
+    if (empty(_xs))
+        error("head []");
+    const Node<_T> &_node = _xs;
+    return _node.elem;
 }
 
-/*
- * Tail.
+/**
+ * Get the tail of a list.
  * O(1).
  */
 template <typename _T>
 inline PURE List<_T> tail(List<_T> _xs) 
 {
-    check(_xs._impl != nullptr, "tail []");
-    List<_T> _ys = {_xs._impl->next};
-    return _ys;
+    if (empty(_xs))
+        error("tail []");
+    const Node<_T> &_node = _xs;
+    return _node.next;
 }
 
-/*
- * Cons.
- * O(1).
- */
-template <typename _T>
-inline PURE List<_T> cons(_T _x, List<_T> _xs)
-{
-    _Node *_ys = (_Node *)gc_malloc(sizeof(_Node));
-    _ys->val = cast<Any>(_x);
-    _ys->next = _xs._impl;
-    List<_T> _zs = {_ys};
-    return _zs;
-}
-
-/*
- * Last.
+/**
+ * Get the last element of a list.
  * O(n).
  */
 template <typename _T>
-inline PURE _T last(List<_T> _xs)
+inline PURE const _T &last(List<_T> _xs)
 {
-    check(_xs._impl != nullptr, "last []");
-    return cast<_T>(_list_last(_xs._impl));
+    _xs = _bit_cast<List<_T>>(_list_last(_bit_cast<List<Word>>(_xs)));
+    const Node<_T> &_node = _xs;
+    return _node.elem;
 }
 
-/*
- * Length.
+/**
+ * List size (a.k.a. list length).
  * O(n).
  */
 template <typename _T>
-inline PURE size_t length(List<_T> _xs)
+inline PURE size_t size(List<_T> _xs)
 {
-    return _list_length(_xs._impl);
+    return _list_length(_bit_cast<List<Word>>(_xs));
 }
 
-/*
- * Take.
+/**
+ * List take `len' elements.
  * O(n).
  */
 template <typename _T>
 inline PURE List<_T> take(List<_T> _xs, size_t _len)
 {
-    List<_T> _ys = {_list_take(_xs._impl, _len)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_take(_bit_cast<List<Word>>(_xs), _len));
 }
 
-/*
- * Take while.
+/**
+ * List take while `test' is true. ([](T elem) -> bool).
  * O(n).
  */
 template <typename _T, typename _F>
 inline PURE List<_T> take_while(List<_T> _xs, _F _test)
 {
-    bool (*_test_func_ptr)(void *,Any) =
-        [](void *_test_0, Any _x) -> bool
+    bool (*_test_func_ptr)(void *, Value<Word>) =
+        [](void *_test_0, Value<Word> _x) -> bool
     {
-        _T _a = cast<_T>(_x);
+        Value<_T> _a = _bit_cast<Value<_T>>(_x);
         _F *_test_1 = (_F *)_test_0;
         return (*_test_1)(_a);
     };
-    List<_T> _ys = {_list_take_while(_xs._impl, _test_func_ptr,
-        (void *)&_test)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_take_while(_bit_cast<List<Word>>(_xs),
+        _test_func_ptr, (void *)&_test));
 }
 
-/*
- * Append.
+/**
+ * List append.
  * O(n).
  */
 template <typename _T>
 inline PURE List<_T> append(List<_T> _xs, List<_T> _ys)
 {
-    List<_T> _zs = {_list_append(_xs._impl, _ys._impl)};
-    return _zs;
+    return _bit_cast<List<_T>>(_list_append(_bit_cast<List<Word>>(_xs),
+        _bit_cast<List<Word>>(_ys)));
 }
 
-/*
- * Reverse.
+/**
+ * List reverse.
  * O(n).
  */
 template <typename _T>
 inline PURE List<_T> reverse(List<_T> _xs)
 {
-    List<_T> _ys = {_list_reverse(_xs._impl)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_reverse(_bit_cast<List<Word>>(_xs)));
 }
 
-/*
- * Zip.
+/**
+ * List zip.
  * O(n).
  */
 template <typename _T, typename _U>
 inline PURE List<Tuple<_T, _U>> zip(List<_T> _xs, List<_U> _ys)
 {
-    List<Tuple<_T, _U>> _zs = {_list_zip(_xs._impl, _ys._impl)};
-    return _zs;
+    return _bit_cast<List<Tuple<_T, _U>>>(_list_zip(_bit_cast<List<Word>>(_xs),
+        _bit_cast<List<Word>>(_ys)));
 }
 
-/*
- * Sort.
+/**
+ * List sort with comparison `cmp'. ([](_T a, _T b) -> int).
  * O(n^2).
  */
 template <typename _T, typename _F>
@@ -225,17 +274,17 @@ inline PURE List<_T> sort(List<_T> _xs, _F _cmp)
         [] (void *_cmp_0, const void *_x, const void *_y) -> int
 #endif
     {
-        Any _a = *(Any *)_x;
-        Any _b = *(Any *)_y;
+        const _T &_a = *(Value<_T> *)_x;
+        const _T &_b = *(Value<_T> *)_y;
         _F *_cmp_1 = (_F *)_cmp_0;
-        return (*_cmp_1)(cast<_T>(_a), cast<_T>(_b));
+        return (*_cmp_1)(_a, _b);
     };
-    List<_T> _ys = {_list_sort(_xs._impl, (void *)(&_cmp), _cmp_func_ptr)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_sort(_bit_cast<List<Word>>(_xs),
+        (void *)(&_cmp), _cmp_func_ptr));
 }
 
-/*
- * Sort.
+/**
+ * List sort.
  * O(n^2).
  */
 template <typename _T>
@@ -248,124 +297,191 @@ inline PURE List<_T> sort(List<_T> _xs)
         [] (void *_unused, const void *_x, const void *_y) -> int
 #endif
     {
-        _T _a = cast<_T>(*(Any *)_x);
-        _T _b = cast<_T>(*(Any *)_y);
+        const _T &_a = *(Value<_T> *)_x;
+        const _T &_b = *(Value<_T> *)_y;
         return compare(_a, _b);
     };
-    List<_T> _ys = {_list_sort(_xs._impl, nullptr, _cmp_func_ptr)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_sort(_bit_cast<List<Word>>(_xs), nullptr,
+        _cmp_func_ptr));
 }
 
-/*
- * Fold left.
+/**
+ * List fold left. ([](A a, T x) -> A).
  * O(n).
  */
 template <typename _T, typename _A, typename _F>
-inline PURE _A foldl(List<_T> _xs, _A _a, _F _func)
+inline PURE _A foldl(List<_T> _xs, const _A &_a, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [] (void *_func_0, Any _a0, Any _x0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [] (void *_func_0, Value<Word> _a0, Value<Word> _x0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        _T _x = cast<_T>(_x0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Value<_T> _x = _bit_cast<Value<_T>>(_x0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, _x);
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _x);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _list_foldl(_xs._impl, _func_ptr, cast<Any>(_a), (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _b = _a;
+    return _bit_cast<Value<_A>>(_list_foldl(_bit_cast<List<Word>>(_xs),
+        _func_ptr, _bit_cast<Value<Word>>(_b), (void *)&_func));
 }
 
-/*
- * Fold right.
+/**
+ * List fold right. ([](A a, T x) -> A).
  * O(n).
  */
 template <typename _T, typename _A, typename _F>
-inline PURE _A foldr(List<_T> _xs, _A _a, _F _func)
+inline PURE _A foldr(List<_T> _xs, const _A &_a, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [] (void *_func_0, Any _a0, Any _x0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [] (void *_func_0, Value<Word> _a0, Value<Word> _x0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        _T _x = cast<_T>(_x0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Value<_T> _x = _bit_cast<Value<_T>>(_x0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, _x);
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _x);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _list_foldr(_xs._impl, _func_ptr, cast<Any>(_a), (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _b = _a;
+    return _bit_cast<Value<_A>>(_list_foldr(_bit_cast<List<Word>>(_xs),
+        _func_ptr, _bit_cast<Value<Word>>(_b), (void *)&_func));
 }
 
-/*
- * Map.
+/**
+ * List map. ([](T x) -> U).
  * O(n).
  */
 template <typename _U, typename _T, typename _F>
 inline PURE List<_U> map(List<_T> _xs, _F _func)
 {
-    Any (*_func_ptr)(void *, Any) =
-        [] (void *_func_0, Any _x0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_func_0, Value<Word> _x0) -> Value<Word>
     {
-        _T _x = cast<_T>(_x0);
+        Value<_T> _x = _bit_cast<Value<_T>>(_x0);
         _F *_func_1 = (_F *)_func_0;
-        _U _y = (*_func_1)(_x);
-        return cast<Any>(_y);
+        Value<_U> _y = (*_func_1)(_x);
+        return _bit_cast<Value<Word>>(_y);
     };
-    List<_U> _ys = {_list_map(_xs._impl, _func_ptr, (void *)&_func)};
-    return _ys;  
+    return _bit_cast<List<_U>>(_list_map(_bit_cast<List<Word>>(_xs),
+        _func_ptr, (void *)&_func));
 }
 
-/*
- * Filter.
+/**
+ * List filter. ([](T x) -> bool).
  * O(n).
  */
 template <typename _T, typename _F>
 inline PURE List<_T> filter(List<_T> _xs, _F _func)
 {
-    bool (*_func_ptr)(void *, Any) =
-        [] (void *_func_0, Any _x0) -> bool
+    bool (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_func_0, Value<Word> _x0) -> bool
     {
-        _T _x = cast<_T>(_x0);
+        Value<_T> _x = _bit_cast<Value<_T>>(_x0);
         _F *_func_1 = (_F *)_func_0;
         return (*_func_1)(_x);
     };
-    List<_T> _ys = {_list_filter(_xs._impl, _func_ptr, (void *)&_func)};
-    return _ys;
+    return _bit_cast<List<_T>>(_list_filter(_bit_cast<List<Word>>(_xs),
+        _func_ptr, (void *)&_func));
 }
 
-/*
- * Compare.
+/**
+ * List compare.
  * O(n).
  */
 template <typename _T>
 inline PURE int compare(List<_T> _xs, List<_T> _ys)
 {
-    int (*_cmp_func_ptr)(Any, Any) =
-        [] (Any _x, Any _y) -> int
+    int (*_cmp_func_ptr)(Value<Word>, Value<Word>) =
+        [] (Value<Word> _x, Value<Word> _y) -> int
     {
-        _T _a = cast<_T>(_x);
-        _T _b = cast<_T>(_y);
+        Value<_T> _a0 = _bit_cast<Value<_T>>(_x);
+        Value<_T> _b0 = _bit_cast<Value<_T>>(_y);
+        const _T &_a = _a0;
+        const _T &_b = _b0;
         return compare(_a, _b);
     };
-    return _list_compare(_xs._impl, _ys._impl, _cmp_func_ptr);
+    return _list_compare(_bit_cast<List<Word>>(_xs),
+        _bit_cast<List<Word>>(_ys), _cmp_func_ptr);
 }
 
-/*
- * Show.
+/**
+ * List show.
  * O(n).
  */
 template <typename _T>
 inline PURE String show(List<_T> _xs)
 {
-    String (*_func_ptr)(Any) =
-        [] (Any _x0) -> String
+    String (*_func_ptr)(Value<Word>) =
+        [] (Value<Word> _x0) -> String
     {
-        _T _x = cast<_T>(_x0);
+        Value<_T> _x1 = _bit_cast<Value<_T>>(_x0);
+        const _T &_x = _x1;
         return show(_x);
     };
-    return _list_show(_xs._impl, _func_ptr);
+    return _list_show(_bit_cast<List<Word>>(_xs), _func_ptr);
+}
+
+/**
+ * Construct an iterator pointing to the start of a list.
+ * O(1).
+ */
+template <typename _T>
+inline PURE ListItr<_T> begin(List<_T> _xs)
+{
+    ListItr<_T> _itr = {_xs};
+    return _itr;
+}
+
+/**
+ * Construct an iterator pointing to the end of a list.
+ * O(1).
+ */
+template <typename _T>
+inline PURE ListItr<_T> end(List<_T> _xs)
+{
+    ListItr<_T> _itr = {list<_T>()};
+    return _itr;
+}
+
+/**
+ * List iterator increment.
+ * O(1).
+ */
+template <typename _T>
+inline ListItr<_T> &operator++(ListItr<_T> &_i)
+{
+    _i._list = tail(_i._list);
+    return _i;
+}
+
+/**
+ * List iterator dereference.
+ * O(1).
+ */
+template <typename _T>
+inline PURE const _T &operator*(ListItr<_T> &_i)
+{
+    return head(_i._list);
+}
+
+template <typename _T>
+inline bool operator==(const ListItr<_T> &_i, const ListItr<_T> &_j)
+{
+    return ((empty(_i._list) && empty(_j._list)) ||
+            (!empty(_i._list) && !empty(_j._list)));
+}
+
+template <typename _T>
+inline bool operator!=(const ListItr<_T> &_i, const ListItr<_T> &_j)
+{
+    return ((!empty(_i._list) && empty(_j._list)) ||
+            (empty(_i._list) && !empty(_j._list)));
 }
 
 }           /* namespace F */
+
+#include "fmap.h"
+#include "fset.h"
+#include "fstring.h"
 
 #endif      /* _FLIST_H */

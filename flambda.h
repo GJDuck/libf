@@ -30,7 +30,7 @@
 #ifndef _FLAMBDA_H
 #define _FLAMBDA_H
 
-#include <string.h>
+#include <cstring>
 
 #include "fgc.h"
 
@@ -61,7 +61,7 @@ struct Func<_T(_A...)>
     {
         _impl = (_func_impl<_T(_A...)> *)gc_malloc(
             sizeof(_func_impl<_T(_A...)>) + sizeof(_func_0));
-        memmove(_impl->_func, (void *)&_func_0, sizeof(_func_0));
+        std::memmove(_impl->_func, (void *)&_func_0, sizeof(_func_0));
         _impl->_exec =
             [] (_func_impl<_T(_A...)> *_data, _A..._args) -> _T
         {

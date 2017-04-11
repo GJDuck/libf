@@ -30,27 +30,41 @@
 #ifndef _FSEQ_H
 #define _FSEQ_H
 
-#include "fdefs.h"
 #include "fbase.h"
+#include "fvalue.h"
 
 namespace F
 {
 
-#define _FRAG_MAX                  16
-
-static PURE inline _Seq _seq_empty(void)
+/*
+ * Seq object.
+ */
+struct _SeqNil
 {
-    const _Seq _empty = set<_Seq>((seq_nil_s *)nullptr);
-    return _empty;
-}
+    // Empty
+};
+struct _SeqSingle;
+struct _SeqDeep;
+typedef Union<_SeqNil, _SeqSingle, _SeqDeep> _Seq;
 
-#define _SEQ_EMPTY                 _seq_empty()
+struct _FragHeader
+{
+    size_t _len;
+};
+
+typedef _Boxed<_FragHeader> _Frag;
+
+inline PURE _Seq _seq_empty(void)
+{
+    return (_SeqNil){};
+}
 
 extern PURE bool _seq_is_empty(_Seq _s);
 extern PURE size_t _seq_length(_Seq _s);
 extern PURE Result<_Frag, size_t> _seq_lookup(_Seq _s, size_t _idx);
-extern PURE Any _seq_search_left(_Seq _s, void *_data, Any _state,
-    Any (*_next)(void *, _Frag, Any), bool (*_stop)(Any));
+extern PURE Value<Word> _seq_search_left(_Seq _s, void *_data,
+    Value<Word> _state, Value<Word> (*_next)(void *, _Frag, Value<Word>),
+    bool (*_stop)(Value<Word>));
 extern PURE _Seq _seq_push_front(_Seq _s, _Frag _frag);
 extern PURE _Seq _seq_replace_front(_Seq _s, _Frag _frag);
 extern PURE Result<_Seq, _Frag> _seq_pop_front(_Seq _s);
@@ -60,17 +74,104 @@ extern PURE _Seq _seq_replace_back(_Seq _s, _Frag _frag);
 extern PURE Result<_Seq, _Frag> _seq_pop_back(_Seq _s);
 extern PURE _Frag _seq_peek_back(_Seq _s);
 extern PURE _Seq _seq_append(_Seq _s, _Seq _t);
-extern PURE Result<_Seq, _Frag, size_t, _Seq> _seq_split(_Seq _s, size_t _idx);
+extern PURE Result<_Seq, _Frag, size_t, _Seq> _seq_split(_Seq _s,
+    size_t _idx);
 extern PURE Result<_Seq, _Frag, size_t> _seq_left(_Seq _s, size_t _idx);
 extern PURE Result<_Frag, size_t, _Seq> _seq_right(_Seq _s, size_t _idx);
 extern PURE int _seq_compare(_Seq _s, _Seq t, void *_data,
     int (_compare)(void *, _Frag, size_t, _Frag, size_t));
-extern PURE Any _seq_foldl(_Seq _s, Any _arg, Any (*_f)(void *, Any, _Frag),
+extern PURE Value<Word> _seq_foldl(_Seq _s, Value<Word> _arg,
+    Value<Word> (*_f)(void *, Value<Word>, size_t, _Frag), void *_data);
+extern PURE Value<Word> _seq_foldr(_Seq _s, Value<Word> _arg,
+    Value<Word> (*_f)(void *, Value<Word>, size_t, _Frag), void *_data);
+extern PURE _Seq _seq_map(_Seq _s, _Frag (*_f)(void *, size_t, _Frag),
     void *_data);
-extern PURE Any _seq_foldr(_Seq _s, Any _arg, Any (*_f)(void *, Any, _Frag),
-    void *_data);
-extern PURE _Seq _seq_map(_Seq _s, _Frag (*_f)(void *, _Frag), void *_data);
 extern PURE bool _seq_verify(_Seq _s);
+extern _Frag _seq_frag_alloc(size_t _size);
+
+struct _SeqItrEntry
+{
+    uint64_t _type:3;
+    uint64_t _offset:48;
+    Value<Word> _value;
+};
+
+struct _SeqItr
+{
+    uint64_t _ptr:8;
+    uint64_t _idx:56;
+    Value<Word> _state;
+};
+
+extern void _seq_itr_begin(_SeqItr *_itr, _Seq _s);
+extern void _seq_itr_end(_SeqItr *_itr, _Seq _s);
+extern void _seq_itr_move(_SeqItr *_itr, ssize_t);
+extern _Frag _seq_itr_get(_SeqItr *_itr, size_t *idx_ptr);
+extern int _seq_itr_compare(const _SeqItr *_i, const _SeqItr *_j);
+
+inline PURE _SeqItr begin(_Seq _s)
+{
+    _SeqItr _itr;
+    _seq_itr_begin(&_itr, _s);
+    return _itr;
+}
+
+inline PURE _SeqItr end(_Seq _s)
+{
+    _SeqItr _itr;
+    _seq_itr_end(&_itr, _s);
+    return _itr;
+}
+
+inline _SeqItr &operator++ (_SeqItr &_i)
+{
+    _i._idx++;
+    return _i;
+}
+
+inline _SeqItr &operator-- (_SeqItr &_i)
+{
+    _i._idx--;
+    return _i;
+}
+
+inline _SeqItr &operator+ (_SeqItr &_i, ssize_t _offset)
+{
+    _i._idx = (ssize_t)_i._idx + _offset;
+    return _i;
+}
+
+inline _SeqItr &operator+= (_SeqItr &_i, ssize_t _offset)
+{
+    _i._idx = (ssize_t)_i._idx + _offset;
+    return _i;
+}
+
+inline _SeqItr &operator-= (_SeqItr &_i, ssize_t _offset)
+{
+    _i._idx = (ssize_t)_i._idx - _offset;
+    return _i;
+}
+
+inline _Frag operator *(_SeqItr &_i)
+{
+    return _seq_itr_get(&_i, nullptr);
+}
+
+inline bool operator <(const _SeqItr &_i, const _SeqItr &_j)
+{
+    return (_i._idx < _j._idx);
+}
+
+inline bool operator ==(const _SeqItr &_i, const _SeqItr &_j)
+{
+    return (_i._idx == _j._idx);
+}
+
+inline bool operator !=(const _SeqItr &_i, const _SeqItr &_j)
+{
+    return (_i._idx != _j._idx);
+}
 
 }               /* namespace F */
 

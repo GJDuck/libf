@@ -30,146 +30,134 @@
 #ifndef _FTUPLE_H
 #define _FTUPLE_H
 
-#include "fdefs.h"
+#include "fbase.h"
+#include "fvalue.h"
+#include "fshow.h"
+
+#include "fstring_defs.h"
+#include "ftuple_defs.h"
 
 namespace F
 {
 
-inline void _tuple_init(Any *_end_ptr)
+inline void _tuple_init(Value<Word> *_end_ptr)
 {
     ;
 }
 
 template <typename _T>
-inline void _tuple_init(Any *_end_ptr, _T arg)
+inline void _tuple_init(Value<Word> *_end_ptr, _T _arg)
 {
-    *_end_ptr = cast<Any>(arg);
+    *_end_ptr = _bit_cast<Value<Word>>(Value<_T>(_arg));
 }
 
 template <typename _U, typename... _T>
-inline void _tuple_init(Any *_start_ptr, _U arg, _T... _args)
+inline void _tuple_init(Value<Word> *_start_ptr, _U _arg, _T... _args)
 {
-    *_start_ptr = cast<Any>(arg);
+    *_start_ptr = _bit_cast<Value<Word>>(Value<_U>(_arg));
     _tuple_init<_T...>(_start_ptr + 1, _args...);
 }
 
+/**
+ * Construct a tuple.
+ * O(1).
+ */
 template <typename... _T>
 inline PURE Tuple<_T...> tuple(_T... _args)
 {
-    Any *_impl = (Any *)gc_malloc(sizeof...(_args) * sizeof(Any));
+    Value<Word> *_impl = (Value<Word> *)gc_malloc(
+        sizeof...(_args) * sizeof(Value<Word>));
     _tuple_init(_impl, _args...);
     Tuple<_T...> _t = {_impl};
     return _t;
 }
 
+/**
+ * First element of a tuple.
+ * O(1).
+ */
 template <typename _U, typename... _T>
-_U fst(Tuple<_U, _T...> _t)
+inline PURE const _U &first(Tuple<_U, _T...> _t)
 {
-    return cast<_U>(_t._impl[0]);
+    return (Value<_U> &)_t._impl[0];
 }
 
+/**
+ * Second element of a tuple.
+ * O(1).
+ */
 template <typename _A, typename _U, typename... _T>
-_U snd(Tuple<_A, _U, _T...> _t)
+inline PURE const _U &second(Tuple<_A, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[1]);
+    return (Value<_U> &)_t._impl[1];
 }
 
+/**
+ * Third element of a tuple.
+ * O(1).
+ */
 template <typename _A, typename _B, typename _U, typename... _T>
-_U third(Tuple<_A, _B, _U, _T...> _t)
+inline PURE const _U &third(Tuple<_A, _B, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[2]);
+    return (Value<_U> &)_t._impl[2];
 }
 
-template <typename _A, typename _B, typename _C, typename _U,
-    typename... _T>
-_U fourth(Tuple<_A, _B, _C, _U, _T...> _t)
+/**
+ * Fourth element of a tuple.
+ * O(1).
+ */
+template <typename _A, typename _B, typename _C, typename _U, typename... _T>
+inline PURE const _U &fourth(Tuple<_A, _B, _C, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[3]);
+    return (Value<_U> &)_t._impl[3];
 }
 
-template <typename _A, typename _B, typename _C, typename _D, typename _U,
-    typename... _T>
-_U fifth(Tuple<_A, _B, _C, _D, _U, _T...> _t)
+/**
+ * Fifth element of a tuple.
+ * O(1).
+ */
+template <typename _A, typename _B, typename _C, typename _D, typename _U, typename... _T>
+inline PURE const _U &fifth(Tuple<_A, _B, _C, _D, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[4]);
+    return (Value<_U> &)_t._impl[4];
 }
 
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename... _T>
-_U sixth(Tuple<_A, _B, _C, _D, _E, _U, _T...> _t)
+/**
+ * Sixth element of a tuple.
+ * O(1).
+ */
+template <typename _A, typename _B, typename _C, typename _D, typename _E, typename _U, typename... _T>
+inline PURE const _U &sixth(Tuple<_A, _B, _C, _D, _E, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[5]);
+    return (Value<_U> &)_t._impl[5];
 }
 
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename _F, typename... _T>
-_U seventh(Tuple<_A, _B, _C, _D, _E, _F, _U, _T...> _t)
+/**
+ * Seventh element of a tuple.
+ * O(1).
+ */
+template <typename _A, typename _B, typename _C, typename _D, typename _E, typename _U, typename _F, typename... _T>
+inline PURE const _U &seventh(Tuple<_A, _B, _C, _D, _E, _F, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[6]);
+    return (Value<_U> &)_t._impl[6];
 }
 
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename _F, typename _G, typename... _T>
-_U eighth(Tuple<_A, _B, _C, _D, _E, _F, _G, _U, _T...> _t)
+/**
+ * Eighth element of a tuple.
+ * O(1).
+ */
+template <typename _A, typename _B, typename _C, typename _D, typename _E, typename _U, typename _F, typename _G, typename... _T>
+inline PURE const _U &eighth(Tuple<_A, _B, _C, _D, _E, _F, _G, _U, _T...> _t)
 {
-    return cast<_U>(_t._impl[7]);
+    return (Value<_U> &)_t._impl[7];
 }
 
-template <typename _U, typename... _T>
-_U *fst_ptr(Tuple<_U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[0]);
-}
-
-template <typename _A, typename _U, typename... _T>
-_U *snd_ptr(Tuple<_A, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[1]);
-}
-
-template <typename _A, typename _B, typename _U, typename... _T>
-_U *third_ptr(Tuple<_A, _B, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[2]);
-}
-
-template <typename _A, typename _B, typename _C, typename _U,
-    typename... _T>
-_U *fourth_ptr(Tuple<_A, _B, _C, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[3]);
-}
-
-template <typename _A, typename _B, typename _C, typename _D, typename _U,
-    typename... _T>
-_U *fifth_ptr(Tuple<_A, _B, _C, _D, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[4]);
-}
-
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename... _T>
-_U *sixth_ptr(Tuple<_A, _B, _C, _D, _E, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[5]);
-}
-
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename _F, typename... _T>
-_U *seventh_ptr(Tuple<_A, _B, _C, _D, _E, _F, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[6]);
-}
-
-template <typename _A, typename _B, typename _C, typename _D, typename _E,
-    typename _U, typename _F, typename _G, typename... _T>
-_U *eighth_ptr(Tuple<_A, _B, _C, _D, _E, _F, _G, _U, _T...> _t)
-{
-    return cast<_U *>(&_t._impl[7]);
-}
-
+/**
+ * Tuple size (a.k.a. tuple length).
+ * O(1).
+ */
 template <typename... _T>
-size_t length(Tuple<_T...> _t)
+constexpr size_t size(Tuple<_T...> _t)
 {
     return sizeof...(_T);
 }
@@ -177,14 +165,14 @@ size_t length(Tuple<_T...> _t)
 template <typename _T>
 inline PURE int _tuple_compare(Tuple<_T> _t, Tuple<_T> _u)
 {
-    return compare(fst(_t), fst(_u));
+    return compare(first(_t), first(_u));
 }
 
 template <typename _U, typename _V, typename ..._T>
 inline PURE int _tuple_compare(Tuple<_U, _V, _T...> _t,
     Tuple<_U, _V, _T...> _u)
 {
-    int _cmp = compare(fst(_t), fst(_u));
+    int _cmp = compare(first(_t), first(_u));
     if (_cmp != 0)
         return _cmp;
     Tuple<_V, _T...> _x = {_t._impl + 1};
@@ -192,6 +180,10 @@ inline PURE int _tuple_compare(Tuple<_U, _V, _T...> _t,
     return _tuple_compare<_V, _T...>(_x, _y);
 }
 
+/**
+ * Tuple compare.
+ * O(n).
+ */
 template <typename... _T>
 inline PURE int compare(Tuple<_T...> _t, Tuple<_T...> _u)
 {
@@ -206,7 +198,7 @@ PURE String string(char32_t _c);
 template <typename _T>
 inline PURE String _tuple_show(Tuple<_T> _t, String _str0)
 {
-    String _str = show(fst(_t));
+    String _str = show(first(_t));
     _str = append(_str0, _str);
     return _str;
 }
@@ -214,13 +206,17 @@ inline PURE String _tuple_show(Tuple<_T> _t, String _str0)
 template <typename _U, typename _V, typename ..._T>
 inline PURE String _tuple_show(Tuple<_U, _V, _T...> _t, String _str0)
 {
-    String _str = show(fst(_t));
+    String _str = show(first(_t));
     _str = append(_str0, _str);
     _str = append(_str, ',');
     Tuple<_V, _T...> _u = {_t._impl + 1};
     return _tuple_show<_V, _T...>(_u, _str);
 }
 
+/**
+ * Tuple show.
+ * O(n).
+ */
 template <typename... _T>
 inline PURE String show(Tuple<_T...> _t)
 {
@@ -231,5 +227,7 @@ inline PURE String show(Tuple<_T...> _t)
 }
 
 }           /* namespace F */
+
+#include "fstring.h"
 
 #endif      /* _FTUPLE_H */

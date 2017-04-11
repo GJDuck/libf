@@ -26,108 +26,27 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+ 
+#ifndef _FSET_DEFS_H
+#define _FSET_DEFS_H
 
-#ifndef _FDEFS_H
-#define _FDEFS_H
-
-#include "fbase.h"
+#include "ftree.h"
 
 namespace F
 {
 
-/*
- * Lists.
- */
-// struct _Node
-// {
-//     Any val;
-//     _Node *next;
-// };
-// 
-// template <typename _T>
-// struct List
-// {
-//     _Node *_impl;
-// };
-
-// /*
-//  * Trees.
-//  */
-// struct tree_nil_s;
-// struct tree2_s;
-// struct tree3_s;
-// struct tree4_s;
-// typedef Multi<tree_nil_s, tree2_s, tree3_s, tree4_s> _Tree;
-
-#if 0
-/*
- * Maps.
- */
-template <typename _K, typename _V>
-struct Map
-{
-    _Tree _impl;
-};
-
-/*
- * Sets.
- */
-template <typename _K>
+template <typename _T>
 struct Set
 {
     _Tree _impl;
 };
-#endif
 
-/*
- * Tuples.
- */
-template <typename... _T>
-struct Tuple
+template <typename _T>
+struct SetItr
 {
-    Any *_impl;
+    _TreeItr _tree_itr;
 };
-
-/*
- * Sequences.
- */
-//struct seq_nil_s;
-//struct seq_single_s;
-//struct seq_deep_s;
-//typedef Multi<seq_nil_s, seq_single_s, seq_deep_s> _Seq;
-//
-//struct _frag_s
-//{
-//    uint8_t len;
-//};
-//typedef struct _frag_s *_Frag;
-
-/*
- * Strings.
- */
-//struct String
-//{
-//    _Seq _impl;
-//};
-//
-///*
-// * Vectors.
-// */
-//template <typename _T>
-//struct Vector
-//{
-//    _Seq _impl;
-//};
-//
-///*
-// * Maybe.
-// */
-//template <typename _T>
-//struct Maybe
-//{
-//    const _T *_impl;
-//};
 
 }           /* namespace F */
 
-#endif      /* _FDEFS_H */
+#endif      /* _FSET_DEFS_H */

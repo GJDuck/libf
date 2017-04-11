@@ -35,25 +35,75 @@
 namespace F
 {
 
-/*
- * Basic comparisons.
+/**
+ * Compare pointers.
  */
 extern PURE int compare(const void *_x, const void *_y);
+
+/**
+ * Compare Booleans.
+ */
 extern PURE int compare(bool _x, bool _y);
+
+/**
+ * Compare signed characters.
+ */
 extern PURE int compare(signed char _x, signed char _y);
+
+/**
+ * Compare unsigned characters.
+ */
 extern PURE int compare(unsigned char _x, unsigned char _y);
+
+/**
+ * Compare signed short integers.
+ */
 extern PURE int compare(short _x, short _y);
+
+/**
+ * Compare unsigned short integers.
+ */
 extern PURE int compare(unsigned short _x, unsigned short _y);
+
+/**
+ * Compare signed integers.
+ */
 extern PURE int compare(int _x, int _y);
+
+/**
+ * Compare unsigned integers.
+ */
 extern PURE int compare(unsigned _x, unsigned _y);
+
+/**
+ * Compare signed long integers.
+ */
 extern PURE int compare(long int _x, long int _y);
+
+/**
+ * Compare unsigned long integers.
+ */
 extern PURE int compare(unsigned long int _x, unsigned long int _y);
+
+/**
+ * Compare signed long long integers.
+ */
 extern PURE int compare(long long int _x, long long int _y);
-extern PURE int compare(unsigned long long int _x,
-    unsigned long long int _y);
+
+/**
+ * Compare unsigned long long integers.
+ */
+extern PURE int compare(unsigned long long int _x, unsigned long long int _y);
+
+/**
+ * Compare floats.
+ */
 extern PURE int compare(float _x, float _y);
+
+/**
+ * Compare doubles.
+ */
 extern PURE int compare(double _x, double _y);
-extern PURE int compare(Any _x, Any _y);
 
 }               /* namespace F */
 

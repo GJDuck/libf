@@ -26,31 +26,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <stdio.h>
-#include <string.h>
-
-#include "fbase.h"
+ 
+#ifndef _FMAYBE_DEFS_H
+#define _FMAYBE_DEFS_H
 
 namespace F
 {
 
-extern PURE void *gc_malloc_pure(size_t size)
+/*
+ * Maybe<T> object.
+ */
+struct Nothing
 {
-    return gc_malloc(size);
-}
+    // Empty
+};
 
-extern PURE void *gc_malloc_atomic_pure(size_t size)
+template <typename _T>
+using Maybe = Union<Nothing, _T>;
+
+enum
 {
-    return gc_malloc_atomic(size);
-}
+    NOTHING = Maybe<Word>::index<Nothing>(),
+    JUST    = Maybe<Word>::index<Word>()
+};
 
-extern PURE void *_box_clone_pure(const void *ptr, size_t size)
-{
-    void *cpy = gc_malloc(size);
-    memmove(cpy, ptr, size);
-    return cpy;
-}
+}           /* namespace F */
 
-}
-
+#endif      /* _FMAYBE_DEFS_H */

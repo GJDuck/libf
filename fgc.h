@@ -30,7 +30,7 @@
 #ifndef _FGC_H
 #define _FGC_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <gc.h>
 
 #ifndef GC_INLINE

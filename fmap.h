@@ -30,203 +30,92 @@
 #ifndef _FMAP_H
 #define _FMAP_H
 
-#include <stdlib.h>
-
-#include "fdefs.h"
 #include "fbase.h"
 #include "fcompare.h"
-#include "flist.h"
-#include "fmaybe.h"
-#include "fstring.h"
 #include "ftree.h"
-#include "ftuple.h"
+
+#include "flist_defs.h"
+#include "fmap_defs.h"
+#include "fstring_defs.h"
+#include "ftuple_defs.h"
 
 namespace F
 {
 
 template <typename _K>
-int _map_compare_wrapper(Any _k1, Any _k2)
+int _map_compare_wrapper(Value<Word> _k1, Value<Word> _k2)
 {
-    Tuple<_K, Any> _a = cast<Tuple<_K, Any>>(_k1);
-    Tuple<_K, Any> _b = cast<Tuple<_K, Any>>(_k2);
-    return compare(fst(_a), fst(_b));
+    Tuple<_K, Value<Word>> _a = _bit_cast<Tuple<_K, Value<Word>>>(_k1);
+    Tuple<_K, Value<Word>> _b = _bit_cast<Tuple<_K, Value<Word>>>(_k2);
+    return compare(first(_a), first(_b));
 }
 
-/*
- * Constructor.
+/**
+ * Construct an empty map.
  * O(1).
  */
 template <typename _K, typename _V>
-inline PURE Map<_K, _V> map(void)
+inline PURE Map<_K, _V> map()
 {
-    Map<_K, _V> _m = {_TREE_EMPTY};
+    Map<_K, _V> _m = {_tree_empty()};
     return _m;
 }
 
-/*
- * Replace+Search.
- * O(log(n)).
+/**
+ * Test if a map is empty.
+ * O(1).
  */
 template <typename _K, typename _V>
-inline PURE Result<Map<_K, _V>, Maybe<_V>> replace_search(Map<_K, _V> _m,
-    _K _k, _V _v)
+inline PURE bool empty(Map<_K, _V> _m)
 {
-    Tuple<_K, _V> _entry = tuple(_k, _v);
-    int _flags = _TREE_INSERT_REPLACE_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_m._impl, cast<Any>(_entry),
-        _flags, _map_compare_wrapper<_K>);
-    Map<_K, _V> _m1 = {_r0.fst};
-    Maybe<_V> _old_v = (_r0.snd != nullptr?
-        maybe(snd_ptr(*cast<Tuple<_K, _V> *>(_r0.snd))):
-        nothing<_V>());
-    Result<Map<_K, _V>, Maybe<_V>> _r = {_m1, _old_v};
-    return _r;
+    return _tree_is_empty(_m._impl);
 }
 
-/*
- * Replace.
+/**
+ * Insert a key-valuue pair into a map.
  * O(log(n)).
  */
 template <typename _K, typename _V>
-inline PURE Map<_K, _V> replace(Map<_K, _V> _m, _K _k, _V _v)
+inline PURE Map<_K, _V> insert(Map<_K, _V> _m, Tuple<_K, _V> _k)
 {
-    Tuple<_K, _V> _entry = tuple(_k, _v);
-    int _flags = _TREE_INSERT_REPLACE_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_m._impl, cast<Any>(_entry),
-        _flags, _map_compare_wrapper<_K>);
-    check(_r0.snd != nullptr, "no entry exists");
-    Map<_K, _V> _m1 = {_r0.fst};
+    Map<_K, _V> _m1 = {_tree_insert(_m._impl, _bit_cast<Value<Word>>(_k),
+        _map_compare_wrapper<_K>)};
     return _m1;
 }
 
-/*
- * Expand.
+/**
+ * Find an entry in the map.
  * O(log(n)).
  */
 template <typename _K, typename _V>
-inline PURE Map<_K, _V> expand(Map<_K, _V> _m, _K _k, _V _v)
+inline PURE Optional<Tuple<_K, _V>> find(Map<_K, _V> _m, const _K &_k)
 {
-    Tuple<_K, _V> _entry = tuple(_k, _v);
-    int _flags = _TREE_INSERT_GROW_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_m._impl, cast<Any>(_entry),
-        _flags, _map_compare_wrapper<_K>);
-    check(_r0.snd == nullptr, "entry exists");
-    Map<_K, _V> _m1 = {_r0.fst};
+    Value<_K> _k1 = _k;
+    Tuple<_K, _V> _key = {_bit_cast<Value<Word> *>(&_k1)};
+    auto _entry = _tree_search(_m._impl, _bit_cast<Value<Word>>(_key),
+        _map_compare_wrapper<_K>);
+    Tuple<_K, _V> *_entry1 = (Tuple<_K, _V> *)_entry;
+    return (_entry1 != nullptr? Optional<Tuple<_K, _V>>(*_entry1):
+        Optional<Tuple<_K, _V>>());
+}
+
+/**
+ * Remove an entry from the map.
+ * O(log(n)).
+ */
+template <typename _K, typename _V>
+inline PURE Map<_K, _V> erase(Map<_K, _V> _m, const _K &_k)
+{
+    Value<_K> _k1 = _k;
+    Tuple<_K, _V> _key = {_bit_cast<Value<Word> *>(&_k1)};
+    Map<_K, _V> _m1 = {_tree_delete(_m._impl, _bit_cast<Value<Word>>(_key),
+        _map_compare_wrapper<_K>)};
     return _m1;
 }
 
-/*
- * Insert+Search.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE Result<Map<_K, _V>, Maybe<_V>> insert_search(Map<_K, _V> _m,
-    _K _k, _V _v)
-{
-    Tuple<_K, _V> _entry = tuple(_k, _v);
-    int _flags = _TREE_INSERT_REPLACE_FLAG | _TREE_INSERT_GROW_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_m._impl, cast<Any>(_entry),
-        _flags, _map_compare_wrapper<_K>);
-    Map<_K, _V> _m1 = {_r0.fst};
-    Maybe<_V> _old_v = (_r0.snd != nullptr?
-        maybe(snd_ptr(*cast<Tuple<_K, _V> *>(_r0.snd))):
-        nothing<_V>());
-    Result<Map<_K, _V>, Maybe<_V>> _r = {_m1, _old_v};
-    return _r;
-}
-
-/*
- * Insert.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE Map<_K, _V> insert(Map<_K, _V> _m, _K _k, _V _v)
-{
-    Tuple<_K, _V> _entry = tuple(_k, _v);
-    int _flags = _TREE_INSERT_REPLACE_FLAG | _TREE_INSERT_GROW_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_m._impl, cast<Any>(_entry),
-        _flags, _map_compare_wrapper<_K>);
-    Map<_K, _V> _m1 = {_r0.fst};
-    return _m1;
-}
-
-/*
- * Membership.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE bool member(Map<_K, _V> _m, _K _k)
-{
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    return _tree_search(_m._impl, cast<Any>(_key), _map_compare_wrapper<_K>);
-}
-
-/*
- * Search.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE Maybe<_V> search(Map<_K, _V> _m, _K _k)
-{
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    Any *_r0 = _tree_search(_m._impl, cast<Any>(_key),
-        _map_compare_wrapper<_K>);
-    Maybe<_V> _r = (_r0 != nullptr?
-        maybe<_V>(snd_ptr(*cast<Tuple<_K, _V> *>(_r0))):
-        nothing<_V>());
-    return _r;
-}
-
-/*
- * Lookup.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE _V lookup(Map<_K, _V> _m, _K _k)
-{
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    Any *_r = _tree_search(_m._impl, cast<Any>(_key),
-        _map_compare_wrapper<_K>);
-    check(_r != nullptr, "entry not found");
-    return snd(*cast<Tuple<_K, _V> *>(_r));
-}
-
-/*
- * Remove.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE Map<_K, _V> remove(Map<_K, _V> _m, _K _k)
-{
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    Result<_Tree, Any *> _r0 = _tree_delete(_m._impl, cast<Any>(_key),
-        _map_compare_wrapper<_K>);
-    Map<_K, _V> _m1 = {_r0.fst};
-    return _m1;
-}
-
-/*
- * Remove+Search.
- * O(log(n)).
- */
-template <typename _K, typename _V>
-inline PURE Result<Map<_K, _V>, Maybe<_V>> remove_search(Map<_K, _V> _m, _K _k)
-{
-    Tuple<_K, _V> _v0;
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    Result<_Tree, Any *> _r0 = _tree_delete(_m._impl, cast<Any>(_key),
-        _map_compare_wrapper<_K>);
-    Map<_K, _V> _m1 = {_r0.fst};
-    Maybe<_V> _old_v = (_r0.snd != nullptr?
-        maybe(snd_ptr(*cast<Tuple<_K, _V> *>(_r0.snd))):
-        nothing<_V>());
-    Result<Map<_K, _V>, Maybe<_V>> _r = {_m1, _old_v};
-    return _r;
-}
-
-/*
- * Size.
- * O(n).
+/**
+ * Map size.
+ * O(1).
  */
 template <typename _K, typename _V>
 inline PURE size_t size(Map<_K, _V> _m)
@@ -234,131 +123,122 @@ inline PURE size_t size(Map<_K, _V> _m)
     return _tree_size(_m._impl);
 }
 
-/*
- * Fold left.
+/**
+ * Map fold left. ([](A a, Tuple<K, V> e) -> A).
  * O(n).
  */
 template <typename _K, typename _V, typename _A, typename _F>
-inline PURE _A foldl(Map<_K, _V> _m, _A _arg, _F _func)
+inline PURE _A foldl(Map<_K, _V> _m, const _A &_arg, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [](void *_func_0, Any _a0, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [](void *_func_0, Value<Word> _a0, Value<Word> _k0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        Tuple<_K, _V> _entry = cast<Tuple<_K, _V>>(_k0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Tuple<_K, _V> _entry = _bit_cast<Tuple<_K, _V>>(_k0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, fst(_entry), snd(_entry));
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _entry);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _tree_foldl(_m._impl, cast<Any>(_arg), _func_ptr, (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _arg1 = _arg;
+    Value<Word> _r = _tree_foldl(_m._impl, _bit_cast<Value<Word>>(_arg1),
+        _func_ptr, (void *)&_func);
+    return _bit_cast<Value<_A>>(_r);
 }
 
-/*
- * Fold right.
+/**
+ * Map fold right. ([](A a, Tuple<K, V> e) -> A).
  * O(n).
  */
 template <typename _K, typename _V, typename _A, typename _F>
-inline PURE _A foldr(Map<_K, _V> _m, _A _arg, _F _func)
+inline PURE _A foldr(Map<_K, _V> _m, const _A &_arg, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [](void *_func_0, Any _a0, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [](void *_func_0, Value<Word> _a0, Value<Word> _k0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        Tuple<_K, _V> _entry = cast<Tuple<_K, _V>>(_k0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Tuple<_K, _V> _entry = _bit_cast<Tuple<_K, _V>>(_k0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, fst(_entry), snd(_entry));
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _entry);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _tree_foldr(_m._impl, cast<Any>(_arg), _func_ptr, (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _arg1 = _arg;
+    Value<Word> _r = _tree_foldr(_m._impl, _bit_cast<Value<Word>>(_arg1),
+        _func_ptr, (void *)&_func);
+    return _bit_cast<Value<_A>>(_r);
 }
 
-/*
- * Map.
+/**
+ * Map map. ([](Tuple<K, V> e) -> Tuple<K, W>).
  * O(n).
  */
 template <typename _W, typename _K, typename _V, typename _F>
 inline PURE Map<_K, _W> map(Map<_K, _V> _m, _F _func)
 {
-    Any (*_func_ptr)(void *, Any) =
-        [](void *_func_0, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [](void *_func_0, Value<Word> _k0) -> Value<Word>
     {
-        Tuple<_K, _V> _entry = cast<Tuple<_K, _V>>(_k0);
+        Tuple<_K, _V> _entry = _bit_cast<Tuple<_K, _V>>(_k0);
         _F *_func_1 = (_F *)_func_0;
-        _W _w = (*_func_1)(fst(_entry), snd(_entry));
-        Tuple<_K, _W> _new_entry = tuple<_K, _W>(fst(_entry), _w);
-        return cast<Any>(_new_entry);
+        _W _w = (*_func_1)(_entry);
+        Tuple<_K, _W> _new_entry = tuple<_K, _W>(first(_entry), _w);
+        return _bit_cast<Value<Word>>(_new_entry);
     };
     Map<_K, _W> _m1 = {_tree_map(_m._impl, _func_ptr, (void *)&_func)};
     return _m1;
 }
 
-/*
- * Constructor.
- * O(n).
- */
-template <typename _K, typename _V>
-inline PURE List<Tuple<_K, _V>> list(Map<_K, _V> _m)
-{
-    Any (*_func_ptr)(void *, Any) = [] (void *_unused, Any _k0) -> Any
-    {
-        return cast<Any>(_k0);
-    };
-    List<Tuple<_K, _V>> _xs = 
-        cast<List<Tuple<_K, _V>>>(_tree_to_list(_m._impl, _func_ptr,
-            nullptr));
-    return _xs;
-}
-
-/*
- * Keys.
+/**
+ * All map keys.
  * O(n).
  */
 template <typename _K, typename _V>
 inline PURE List<_K> keys(Map<_K, _V> _m)
 {
-    Any (*_func_ptr)(void *, Any) = [] (void *_unused, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_unused, Value<Word> _k0) -> Value<Word>
     {
-        Tuple<_K, _V> _k = cast<Tuple<_K, _V>>(_k0);
-        return cast<Any>(fst(_k));
+        Tuple<_K, _V> _k = _bit_cast<Tuple<_K, _V>>(_k0);
+        return _bit_cast<Value<Word>>(first(_k));
     };
-    List<_K> _xs = cast<List<_K>>(_tree_to_list(_m._impl, _func_ptr, nullptr));
+    List<_K> _xs = _bit_cast<List<_K>>(
+        _tree_to_list(_m._impl, _func_ptr, nullptr));
     return _xs;
 }
 
-/*
- * Values.
+/**
+ * All map Values.
  * O(n).
  */
 template <typename _K, typename _V>
 inline PURE List<_V> values(Map<_K, _V> _m)
 {
-    Any (*_func_ptr)(void *, Any) = [] (void *_unused, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>) =
+        [] (void *_unused, Value<Word> _k0) -> Value<Word>
     {
-        Tuple<_K, _V> _k = cast<Tuple<_K, _V>>(_k0);
-        return cast<Any>(snd(_k));
+        Tuple<_K, _V> _k = _bit_cast<Tuple<_K, _V>>(_k0);
+        return _bit_cast<Value<Word>>(second(_k));
     };
-    List<_V> _xs = cast<List<_V>>(_tree_to_list(_m._impl, _func_ptr, nullptr));
+    List<_V> _xs = _bit_cast<List<_V>>(
+        _tree_to_list(_m._impl, _func_ptr, nullptr));
     return _xs;
 }
 
-/*
- * Split.
+/**
+ * Map split.
  * O(log(n)).
  */
 template <typename _K, typename _V>
 inline PURE Result<Map<_K, _V>, Map<_K, _V>> split(Map<_K, _V> _m, _K _k)
 {
-    Tuple<_K, _V> _key = cast<Tuple<_K, _V>>(cast<Any *>(&_k));
-    Result<_Tree, _Tree> _r0 = _tree_split(_m._impl, cast<Any>(_key),
-        _map_compare_wrapper<_K>);
-    Result<Map<_K, _V>, Map<_K, _V>> _r = {{_r0.fst}, {_r0.snd}};
+    Tuple<_K, _V> _key = {_bit_cast<Value<Word> *>(&_k)};
+    auto [_tl, _tr] = _tree_split(_m._impl,
+        _bit_cast<Value<Word>>(_key), _map_compare_wrapper<_K>);
+    Result<Map<_K, _V>, Map<_K, _V>> _r = {{_tl}, {_tr}};
     return _r;
 }
 
-/*
- * Merge.
+/**
+ * Map merge.
  * O(log(n) + log(m)).
  */
 template <typename _K, typename _V>
@@ -369,8 +249,8 @@ inline PURE Map<_K, _V> merge(Map<_K, _V> _ma, Map<_K, _V> _mb)
     return _m1;
 }
 
-/*
- * Verify.
+/**
+ * Map verify.
  * O(n).
  */
 template <typename _K, typename _V>
@@ -379,39 +259,164 @@ inline PURE bool verify(Map<_K, _V> _m)
     return _tree_verify(_m._impl);
 }
 
-/*
- * Compare.
+/**
+ * Map compare.
  * O(n).
  */
 template <typename _K, typename _V>
 inline PURE int compare(Map<_K, _V> _m1, Map<_K, _V> _m2)
 {
-    int (*_func_ptr)(void *, Any, Any) =
-        [] (void *_unused, Any _k10, Any _k20) -> int
+    int (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [] (void *_unused, Value<Word> _k10, Value<Word> _k20) -> int
     {
-        Tuple<_K, _V> _k1 = cast<Tuple<_K, _V>>(_k10);
-        Tuple<_K, _V> _k2 = cast<Tuple<_K, _V>>(_k20);
+        Tuple<_K, _V> _k1 = _bit_cast<Tuple<_K, _V>>(_k10);
+        Tuple<_K, _V> _k2 = _bit_cast<Tuple<_K, _V>>(_k20);
         return compare(_k1, _k2);
     };
     return _tree_compare(_m1._impl, _m2._impl, nullptr, _func_ptr);
 }
 
-/*
- * Show.
+/**
+ * Map show.
  * O(n).
  */
 template <typename _K, typename _V>
 inline PURE String show(Map<_K, _V> _m)
 {
-    String (*_func_ptr)(Any) = 
-        [] (Any _k0) -> String
+    String (*_func_ptr)(Value<Word>) = 
+        [] (Value<Word> _k0) -> String
     {
-        Tuple<_K, _V> _k = cast<Tuple<_K, _V>>(_k0);
-        return append(append(show(fst(_k)), "->"), show(snd(_k)));
+        Tuple<_K, _V> _k = _bit_cast<Tuple<_K, _V>>(_k0);
+        return append(append(show(first(_k)), "->"), show(second(_k)));
     };
     return _tree_show(_m._impl, _func_ptr);
 }
 
+/**
+ * Construct an iterator pointing to the least entry of a map.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline PURE MapItr<_K, _V> begin(Map<_K, _V> _m)
+{
+    MapItr<_K, _V> _itr;
+    _itr._tree_itr = begin(_m._impl);
+    return _itr;
+}
+
+/**
+ * Construct an iterator representing one past the greatest entry of a map.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline PURE MapItr<_K, _V> end(Map<_K, _V> _m)
+{
+    MapItr<_K, _V> _itr;
+    _itr._tree_itr = end(_m._impl);
+    return _itr;
+}
+
+/**
+ * Map iterator increment.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator++(MapItr<_K, _V> &_i)
+{
+    ++_i._tree_itr;
+    return _i;
+}
+
+/**
+ * Map iterator decrement.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator--(MapItr<_K, _V> &_i)
+{
+    --_i._tree_itr;
+    return _i;
+}
+
+/**
+ * Map iterator add offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator+(MapItr<_K, _V> &_i, ssize_t _offset)
+{
+    _i._tree_itr += _offset;
+    return _i;
+}
+
+/**
+ * Map iterator substract offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator-(MapItr<_K, _V> &_i, ssize_t _offset)
+{
+    _i._tree_itr -= _offset;
+    return _i;
+}
+
+/**
+ * Map iterator add offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator+=(MapItr<_K, _V> &_i, ssize_t _offset)
+{
+    _i._tree_itr += _offset;
+    return _i;
+}
+
+/**
+ * Map iterator substract offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline MapItr<_K, _V> &operator-=(MapItr<_K, _V> &_i, ssize_t _offset)
+{
+    _i._tree_itr -= _offset;
+    return _i;
+}
+
+/**
+ * Map iterator dereference.
+ * O(log(delta)), where delta is distance to last dereference.
+ */
+template <typename _K, typename _V>
+inline PURE Tuple<_K, _V> operator*(MapItr<_K, _V> &_i)
+{
+    Value<Word> _k = *_i._tree_itr;
+    return _bit_cast<Tuple<_K, _V>>(_k);
+}
+
+/**
+ * Map iterator same offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline bool operator==(const MapItr<_K, _V> &_i, const MapItr<_K, _V> &_j)
+{
+    return (_i._tree_itr != _j._tree_itr);
+}
+
+/**
+ * Map iterator different offset.
+ * O(1).
+ */
+template <typename _K, typename _V>
+inline bool operator!=(const MapItr<_K, _V> &_i, const MapItr<_K, _V> &_j)
+{
+    return (_i._tree_itr != _j._tree_itr);
+}
+
 }           /* namespace F */
+
+#include "flist.h"
+#include "fstring.h"
+#include "ftuple.h"
 
 #endif      /* _MAP_H */

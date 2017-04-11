@@ -32,82 +32,101 @@
 
 #include "fbase.h"
 #include "fcompare.h"
-#include "flist.h"
+#include "fshow.h"
 #include "ftree.h"
+#include "fvalue.h"
+
+#include "flist_defs.h"
+#include "fset_defs.h"
+#include "fstring_defs.h"
 
 namespace F
 {
 
 template <typename _T>
-int _set_compare_wrapper(Any _k1, Any _k2)
+int _set_compare_wrapper(Value<Word> _k1, Value<Word> _k2)
 {
-    _T _a = cast<_T>(_k1);
-    _T _b = cast<_T>(_k2);
+    Value<_T> _a0 = _bit_cast<Value<_T>>(_k1);
+    Value<_T> _b0 = _bit_cast<Value<_T>>(_k2);
+    const _T &_a = _a0;
+    const _T &_b = _b0;
     return compare(_a, _b);
 }
 
-/*
- * Constructor.
+/**
+ * Construct the empty set.
  * O(1).
  */
 template <typename _T>
 inline PURE Set<_T> set(void)
 {
-    Set<_T> _s = {_TREE_EMPTY};
+    Set<_T> _s = {_tree_empty()};
     return _s;
 }
 
-/*
- * Constructor.
+/**
+ * Construct a set from a list.
  * O(n * log(n)).
  */
 template <typename _T>
 inline PURE Set<_T> set(List<_T> _xs)
 {
-    Set<_T> _s = {_tree_from_list(cast<List<Any>>(_xs),
+    Set<_T> _s = {_tree_from_list(_bit_cast<List<Value<Word>>>(_xs),
         _set_compare_wrapper<_T>)};
     return _s;
 }
 
-/*
- * Membership.
- * O(log(n)).
+/**
+ * Test if a set is empty.
+ * O(1).
  */
 template <typename _T>
-inline PURE bool member(Set<_T> _s, _T _k)
+inline PURE bool empty(Set<_T> _xs)
 {
-    return _tree_search(_s._impl, cast<Any>(_k), _set_compare_wrapper<_T>);
+    return _tree_is_empty(_xs._impl);
 }
 
-/*
- * Insert.
+/**
+ * Test if an element is a member of a set.
  * O(log(n)).
  */
 template <typename _T>
-inline PURE Set<_T> insert(Set<_T> _s, _T _k)
+inline PURE bool find(Set<_T> _s, const _T &_k)
 {
-    int _flags = _TREE_INSERT_GROW_FLAG;
-    Result<_Tree, Any *> _r0 = _tree_insert(_s._impl, cast<Any>(_k), _flags,
-            _set_compare_wrapper<_T>);
-    Set<_T> _s1 = {_r0.fst};
-    return _s1;
-}
-
-/*
- * Removal.
- * O(log(n)).
- */
-template <typename _T>
-inline PURE Set<_T> remove(Set<_T> _s, _T _k)
-{
-    Result<_Tree, Any *> _r0 = _tree_delete(_s._impl, cast<Any>(_k),
+    Value<_T> _k1 = _k;
+    auto _entry = _tree_search(_s._impl, _bit_cast<Value<Word>>(_k1),
         _set_compare_wrapper<_T>);
-    Set<_T> _s1 = {_r0.fst};
+    return (_entry != nullptr);
+}
+
+/**
+ * Set insert.
+ * O(log(n)).
+ */
+template <typename _T>
+inline PURE Set<_T> insert(Set<_T> _s, const _T &_k)
+{
+    Value<_T> _k1 = _k;
+    Set<_T> _s1 = {_tree_insert(_s._impl, _bit_cast<Value<Word>>(_k1),
+            _set_compare_wrapper<_T>)};
     return _s1;
 }
 
-/*
- * Union (merge).
+/**
+ * Set remove.
+ * O(log(n)).
+ */
+template <typename _T>
+inline PURE Set<_T> erase(Set<_T> _s, const _T &_k)
+{
+    Value<_T> _k1 = _k;
+    Set<_T> _s1 = {_tree_delete(_s._impl, _bit_cast<Value<Word>>(_k1),
+        _set_compare_wrapper<_T>)};
+    return _s1;
+}
+
+/**
+ * Set union (merge).
  * O(log(n) + log(m)).
  */
 template <typename _T>
@@ -117,8 +136,8 @@ inline PURE Set<_T> merge(Set<_T> _s, Set<_T> _t)
     return _u;
 }
 
-/*
- * Intersect.
+/**
+ * Set intersect.
  * O(log(n) + log(m)).
  */
 template <typename _T>
@@ -129,8 +148,8 @@ inline PURE Set<_T> intersect(Set<_T> _s, Set<_T> _t)
     return _u;
 }
 
-/*
- * Difference.
+/**
+ * Set difference.
  * O(log(n) + log(m)).
  */
 template <typename _T>
@@ -140,8 +159,8 @@ inline PURE Set<_T> diff(Set<_T> _s, Set<_T> _t)
     return _u;
 }
 
-/*
- * Size.
+/**
+ * Set size.
  * O(n).
  */
 template <typename _T>
@@ -150,94 +169,220 @@ inline PURE size_t size(Set<_T> _s)
     return _tree_size(_s._impl);
 }
 
-/*
- * Constructor.
- * O(n).
- */
-template <typename _T>
-inline PURE List<_T> list(Set<_T> _s)
-{
-    Any (*_func_ptr)(void *, Any) = [] (void *_unused, Any _k0) -> Any
-    {
-        return cast<Any>(_k0);
-    };
-    List<_T> _xs = cast<List<_T>>(_tree_to_list(_s._impl, _func_ptr, nullptr));
-    return _xs;
-}
-
-/*
- * Fold left.
+/**
+ * Set fold left. ([](A a, T x) -> A).
  * O(n).
  */
 template <typename _T, typename _A, typename _F>
-inline PURE _A foldl(Set<_T> _s, _A _arg, _F _func)
+inline PURE _A foldl(Set<_T> _s, const _A &_arg, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [](void *_func_0, Any _a0, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [](void *_func_0, Value<Word> _a0, Value<Word> _k0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        _T _k = cast<_T>(_k0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Value<_T> _k = _bit_cast<Value<_T>>(_k0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, _k);
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _k);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _tree_foldl(_s._impl, cast<Any>(_arg), _func_ptr, (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _arg1 = _arg;
+    Value<Word> _r = _tree_foldl(_s._impl, _bit_cast<Value<Word>>(_arg1),
+        _func_ptr, (void *)&_func);
+    return _bit_cast<Value<_A>>(_r);
 }
 
-/*
- * Fold right.
+/**
+ * Set fold right. ([](A a, T x) -> A).
  * O(n).
  */
 template <typename _T, typename _A, typename _F>
-inline PURE _A foldr(Set<_T> _s, _A _arg, _F _func)
+inline PURE _A foldr(Set<_T> _s, const _A &_arg, _F _func)
 {
-    Any (*_func_ptr)(void *, Any, Any) =
-        [](void *_func_0, Any _a0, Any _k0) -> Any
+    Value<Word> (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [](void *_func_0, Value<Word> _a0, Value<Word> _k0) -> Value<Word>
     {
-        _A _a = cast<_A>(_a0);
-        _T _k = cast<_T>(_k0);
+        Value<_A> _a = _bit_cast<Value<_A>>(_a0);
+        Value<_T> _k = _bit_cast<Value<_T>>(_k0);
         _F *_func_1 = (_F *)_func_0;
-        _A _b = (*_func_1)(_a, _k);
-        return cast<Any>(_b);
+        Value<_A> _b = (*_func_1)(_a, _k);
+        return _bit_cast<Value<Word>>(_b);
     };
-    Any _r = _tree_foldr(_s._impl, cast<Any>(_arg), _func_ptr, (void *)&_func);
-    return cast<_A>(_r);
+    Value<_A> _arg1 = _arg;
+    Value<Word> _r = _tree_foldr(_s._impl, _bit_cast<Value<Word>>(_arg1),
+        _func_ptr, (void *)&_func);
+    return _bit_cast<Value<_A>>(_r);
 }
 
-/*
- * Compare.
+/**
+ * Set compare.
  * O(n).
  */
 template <typename _T>
 inline PURE int compare(Set<_T> _s, Set<_T> _t)
 {
-    int (*_func_ptr)(void *, Any, Any) =
-        [](void *_unused, Any _ks0, Any _kt0) -> int
+    int (*_func_ptr)(void *, Value<Word>, Value<Word>) =
+        [](void *_unused, Value<Word> _ks0, Value<Word> _kt0) -> int
     {
-        _T _ks = cast<_T>(_ks0);
-        _T _kt = cast<_T>(_kt0);
+        Value<_T> _ks1 = _bit_cast<Value<_T>>(_ks0);
+        Value<_T> _kt1 = _bit_cast<Value<_T>>(_kt0);
+        const _T &_ks = _ks1;
+        const _T &_kt = _kt1;
         return compare(_ks, _kt);
     };
     return _tree_compare(_s._impl, _t._impl, nullptr, _func_ptr);
 }
 
-/*
- * Show.
+/**
+ * Set show.
  * O(n).
  */
 template <typename _T>
 inline PURE String show(Set<_T> _s)
 {
-    String (*_func_ptr)(Any) =
-        [] (Any _k0) -> String
+    String (*_func_ptr)(Value<Word>) =
+        [] (Value<Word> _k0) -> String
     {
-        _T _k = cast<_T>(_k0);
+        Value<_T> _k1 = _bit_cast<Value<_T>>(_k0);
+        const _T &_k = _k1;
         return show(_k);
     };
     return _tree_show(_s._impl, _func_ptr);
 }
 
+/**
+ * Construct an iterator pointing to the least element of a set.
+ * O(1).
+ */
+template <typename _T>
+inline PURE SetItr<_T> begin(Set<_T> _s)
+{
+    SetItr<_T> _itr;
+    _itr._tree_itr = begin(_s._impl);
+    return _itr;
+}
+
+/**
+ * Construct an iterator representing one past the greatest element of a set.
+ * O(1).
+ */
+template <typename _T>
+inline PURE SetItr<_T> end(Set<_T> _s)
+{
+    SetItr<_T> _itr;
+    _itr._tree_itr = end(_s._impl);
+    return _itr;
+}
+
+/**
+ * Set iterator increment.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator++(SetItr<_T> &_i)
+{
+    ++_i._tree_itr;
+    return _i;
+}
+
+/**
+ * Set iterator decrement.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator--(SetItr<_T> &_i)
+{
+    --_i._tree_itr;
+    return _i;
+}
+
+/**
+ * Set iterator add offset.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator+(SetItr<_T> &_i, ssize_t _offset)
+{
+    _i._tree_itr += _offset;
+    return _i;
+}
+
+/**
+ * Set iterator substract offset.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator-(SetItr<_T> &_i, ssize_t _offset)
+{
+    _i._tree_itr -= _offset;
+    return _i;
+}
+
+/**
+ * Set iterator add offset.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator+=(SetItr<_T> &_i, ssize_t _offset)
+{
+    _i._tree_itr += _offset;
+    return _i;
+}
+
+/**
+ * Set iterator substract offset.
+ * O(1).
+ */
+template <typename _T>
+inline SetItr<_T> &operator-=(SetItr<_T> &_i, ssize_t _offset)
+{
+    _i._tree_itr -= _offset;
+    return _i;
+}
+
+/**
+ * Set iterator dereference.
+ * O(log(delta)), where delta is distance to last dereference.
+ */
+template <typename _T>
+inline PURE const _T &operator*(SetItr<_T> &_i)
+{
+    const Value<Word> &_k = *_i._tree_itr;
+    return (Value<_T> &)_k;
+}
+
+/**
+ * Set verify.
+ * O(n).
+ */
+template <typename _T>
+inline PURE bool verify(Set<_T> _s)
+{
+    return _tree_verify(_s._impl);
+}
+
+/**
+ * Set iterator same offset.
+ * O(1).
+ */
+template <typename _T>
+inline PURE bool operator==(const SetItr<_T> &_i, const SetItr<_T> &_j)
+{
+    return (_i._tree_itr == _j._tree_itr);
+}
+
+/**
+ * Set iterator different offset.
+ * O(1).
+ */
+template <typename _T>
+inline PURE bool operator!=(const SetItr<_T> &_i, const SetItr<_T> &_j)
+{
+    return (_i._tree_itr != _j._tree_itr);
+}
+
 }           /* namespace F */
+
+#include "flist.h"
+#include "fstring.h"
 
 #endif      /* _FSET_H */

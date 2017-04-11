@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "fcompare.h"
+#include "fvalue.h"
 
 namespace F
 {
@@ -137,8 +138,8 @@ extern PURE int compare(float x, float y)
         return -1;
     if (x > y)
         return 1;
-    Any a = cast<Any>(x);
-    Any b = cast<Any>(y);
+    uintptr_t a = _bit_cast<uintptr_t>(x);
+    uintptr_t b = _bit_cast<uintptr_t>(y);
     return compare(a, b);
 }
 
@@ -148,18 +149,9 @@ extern PURE int compare(double x, double y)
         return -1;
     if (x > y)
         return 1;
-    Any a = cast<Any>(x);
-    Any b = cast<Any>(y);
+    uintptr_t a = _bit_cast<uintptr_t>(x);
+    uintptr_t b = _bit_cast<uintptr_t>(y);
     return compare(a, b);
-}
-
-extern PURE int compare(Any x, Any y)
-{
-    if (x._val < y._val)
-        return -1;
-    if (x._val > y._val)
-        return 1;
-    return 0;
 }
 
 }
