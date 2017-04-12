@@ -1,7 +1,7 @@
-LIBF 0.2 -- Reinventing C++ as a Pure Functional Programming Language
-=====================================================================
+LIBF++ 0.2 -- C++ as a Pure Functional Language
+===============================================
 
-Libf is a library that supports pure functional programming in C++.
+LibF is a library that supports pure functional programming in C++.
 
 Modern C++ purports to be a "multi-paradigm" programming language supporting
 procedural, object-oriented and functional features.  In reality however, most
@@ -23,17 +23,17 @@ the above code can be translated into:
 
     F::Vector<int> xs;
     for (int i = 0; i < 10; i++)
-        xs = push_back(xs, i);
+        xs = F::push_back(xs, i);
 
 Unlike the standard C++ library, LibF objects are *immutable*.  This makes the
 following code possible:
 
     F::Vector<int> xs;
     for (int i = 0; i < 5; i++)
-        xs = push_back(xs, i);
+        xs = F::push_back(xs, i);
     F::Vector<int> ys = xs;  // Save the current xs
     for (int i = 0; i < 5; i++)
-        xs = push_back(xs, i);
+        xs = F::push_back(xs, i);
     printf("%s\n%s\n", c_str(show(ys)), c_str(show(xs)));
 
 This code will print:
@@ -45,8 +45,9 @@ The old object `ys` was unaffected by the changes made to its copy `xs`.  And
 just like stdlib++, the LibF vector `push_back` operation is still O(1) --
 although the constant factors may differ (see below).
 
-Using C++ as a functional programming language has several advantages.
-Namely:
+With immutable objects, it is possible to use (a subset of) C++ as a pure
+functional programming language.  Compared to other functional languages, C++
+has several advantages, namely:
 
 * *Compiler Support*.  C++ is supported by several stable, mature optimizing
   compilers.
@@ -152,10 +153,11 @@ In principle, this can be replaced with:
 
     F::Vector<int> xs;
     for (int i = 0; i < 10; i++)
-        xs = push_back(xs, i);
+        xs = F::push_back(xs, i);
 
-Although each `push_back` operation is still O(1), the constant factors differ
-by a factor of 100.  Instead it may be better to use a list instead, e.g.:
+Although each `F::push_back` operation is still O(1), the constant factors
+differ by a factor of 100.  Instead it may be better to use a list instead,
+e.g.:
 
     F::List<int> xs;
     for (int i = 0; i < 10; i++)
@@ -175,7 +177,7 @@ create your own list type:
     template <typename T> struct NODE;
     struct EMPTY;
     template <typename T>
-    using LIST = Union<EMPTY, NODE<T>>;
+    using LIST = F::Union<EMPTY, NODE<T>>;
     struct EMPTY { };
     struct NODE
     {
@@ -190,12 +192,12 @@ The type `LIST` is defined to be a discriminated union between the `EMPTY` and
 can be passed-by-copy.  The index of the underlying type for a discriminated
 union is returned by a special `index` function.  The discriminated union type
 can then be cast to the underlying type, and vice versa.  For example, the
-following function reverses a `LIST`:
+following function reverses a `LIST` by accumulating onto `ys`:
 
 	template <typename T>
 	PURE LIST<T> reverse(LIST<T> xs, LIST<T> ys)
 	{
-	    switch (index(xs))	// Determine if xs is a node or empty.
+	    switch (F::index(xs))	// Determine if xs is a node or empty.
 	    {
 	        case LIST_EMPTY:
 	            return ys;
@@ -265,19 +267,21 @@ Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
 LibF is constructing a linked-list `F::List`, followed by `F::Vector`.
 Constructing `F::map` has about twice the overhead as the mutable `std::map`
 counterpart.  Such results are expected (immutability has inherit costs).
+Note that these benchmarks assume that the garbage collector is disabled.
+Otherwise garbage collector overheads become a significant factor about the 3M
+mark.
 
-The following compares the time to scan each data structure using a C++ range
-loop, i.e.:
+The following compares the time to scan each data structure using `foldl` or a
+C++ range loop, i.e.:
 
     int sum = 0;
     for (auto x: xs) sum += x;
 
 ![Benchmarks2](http://comp.nus.edu.sg/~gregory/images/LibF_benchs2.png)
 
-Note that this uses iterators, which are slower for LibF data structures
-compared to the mutable standard library counterparts.  An alternative is to
-use `foldl` when appropriate, which generally faster than iterators, but is
-less expressive in general.
+Note that range loops use iterators, which are slower for LibF data structures
+compared to the mutable standard library counterparts.  The `foldl`
+alternatives are faster, but are less expressive in general.
 
 Library Documentation:
 ----------------------

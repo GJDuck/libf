@@ -31,8 +31,8 @@ CLIBS = -lc -lgc
 CLIB = $(OBJS)
 
 libf.so: $(OBJS)
-	$(CXX) -shared -o libf.so $(OBJS) $(CLIBS)
+	$(CXX) -shared -o libf++.so $(OBJS) $(CLIBS)
 
 clean:
-	rm -f *.o *.s *.i main
+	rm -f *.o *.s *.i
 

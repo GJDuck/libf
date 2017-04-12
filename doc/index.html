@@ -1,0 +1,443 @@
+<html>
+<body>
+<h1>LIBF++ 0.2 DOCUMENTATION</h1>
+
+<hr>
+<h2>Types</h2>
+
+<ul>
+<li><a href="#union" style="text-decoration:none;">Union</a></li>
+<li><a href="#result" style="text-decoration:none;">Result</a></li>
+<li><a href="#tuple" style="text-decoration:none;">Tuple</a></li>
+<li><a href="#optional" style="text-decoration:none;">Optional</a></li>
+<li><a href="#maybe" style="text-decoration:none;">Maybe</a></li>
+<li><a href="#list" style="text-decoration:none;">List</a></li>
+<li><a href="#map" style="text-decoration:none;">Map</a></li>
+<li><a href="#set" style="text-decoration:none;">Set</a></li>
+<li><a href="#vector" style="text-decoration:none;">Vector</a></li>
+<li><a href="#string" style="text-decoration:none;">String</a></li>
+</ul>
+
+<h2>Modules</h2>
+
+<ul>
+<li><a href="compare.html" style="text-decoration:none;">Compare</a></li>
+<li><a href="list.html" style="text-decoration:none;">List</a></li>
+<li><a href="map.html" style="text-decoration:none;">Map</a></li>
+<li><a href="maybe.html" style="text-decoration:none;">Maybe</a></li>
+<li><a href="show.html" style="text-decoration:none;">Show</a></li>
+<li><a href="string.html" style="text-decoration:none;">String</a></li>
+<li><a href="tuple.html" style="text-decoration:none;">Tuple</a></li>
+<li><a href="value.html" style="text-decoration:none;">Value</a></li>
+<li><a href="vector.html" style="text-decoration:none;">Vector</a></li>
+</ul>
+
+<hr>
+<a name="union"><h3>Union</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T<sub>1</sub>, ..., <b>typename</b> T<sub>n</sub>&gt;
+    <b>struct</b> <u><b>Union</b></u>
+    {
+        ...
+        <b>template</b> &lt;<b>typename</b> U&gt; <u><b>Union</b></u>(<b>const</b> U &amp;x);
+        <b>template</b> &lt;<b>typename</b> U&gt; <b>operator</b> <b>const</b> U&amp;() <b>const</b>;
+        <b>template</b> &lt;<b>typename</b> U&gt; <b>constexpr</b> <b>unsigned</b> index();
+    };
+
+    <b>template</b> &lt;<b>typename</b> T<sub>1</sub>, ..., <b>typename</b> T<sub>n</sub>&gt;
+        <b>pure</b> <b>unsigned</b> index(<u><b>Union</b></u>&lt;T<sub>1</sub>, ..., T<sub>n</sub>&gt; u);
+}
+</pre>
+</td></tr></table>
+
+<p>
+A discriminated union between <tt>n</tt> child types.
+</p>
+
+<p>
+A <tt><b>Union</b></tt> object can be constructed from an object of any
+child type using an up-cast, e.g.:
+<pre>
+    T<sub>i</sub> x = ...;
+    <b>auto</b> u = (<tt><b>Union</b></tt>&lt;T<sub>1</sub>, ..., T<sub>n</sub>&gt;)x;
+</pre>
+This will create a copy of <tt>x</tt> and assumes T<sub>i</sub> is
+copy constructible.
+</p>
+<p>
+The child object can be retrieved via a downcast, e.g.:
+<pre>
+    <b>auto</b> &amp;y = (T<sub>i</sub> &amp;)u;
+    <b>auto</b> y  = (T<sub>i</sub>)u;   // Alternative
+</pre>
+Note that it is undefined (<tt><b>nullptr</b></tt> dereference) if <tt>u</tt>
+was not constructed from a <tt>T<sub>i</sub></tt> object.
+</p>
+<p>
+The type of a <tt><b>Union</b></tt> object can be retrieved at runtime
+via the <tt>index</tt> function, e.g.:
+<pre>
+    <b>switch</b>(index(u)) { ... }
+</pre>
+The <tt>index</tt> function returns <tt>0</tt> if <tt>u</tt> is the
+first child type, <tt>1</tt> for the second child type, etc.
+The index of a child type can be determined via the static function:
+<pre>
+    <b>Union</b>&lt;T<sub>1</sub>, ..., T<sub>n</sub>&gt;::index&lt;T<sub>i</sub>&gt;() = i-1
+</pre>
+</p>
+<p>
+A <tt><b>Union</b></tt> object is compact, i.e.
+<pre>
+    <b>sizeof</b>(<b>Union</b>&lt;T<sub>1</sub>, ..., T<sub>n</sub>&gt;) = <b>sizeof</b>(<b>void</b> *)
+</pre>
+This means that <tt><b>Union</b></tt> objects can be passed-by-copy without
+performance loss.
+A <tt><b>Union</b></tt> object is implemented internally as tagged pointers,
+and can support up to 16 child types.
+</p>
+
+<p>
+See the documentation on <a href="value.html">value functions</a> for more
+information.
+</p>
+
+<u><b>Example 1</b></u>
+
+<p>
+We can use a <tt><b>Union</b></tt> to define a simple <tt>Maybe</tt>
+type as follows:
+<pre>
+    <b>struct</b> Nothing { };
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>using</b> Maybe = F::<b>Union</b>&lt;Nothing, T&gt;;
+    #<b>define</b> NOTHING Maybe&lt;<b>void</b>&gt;::index&lt;Nothing&gt;()
+    #<b>define</b> JUST    Maybe&lt;<b>void</b>&gt;::index&lt;<b>void</b>&gt;()
+</pre>
+This is analogous to the <tt>Maybe</tt> type from Haskell.
+</p>
+<p>
+We can define <tt>Maybe</tt> comparison as follows:
+<pre>
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>int</b> compare(Maybe&lt;T&gt; x, Maybe&lt;T&gt; y)
+    {
+        <b>switch</b> (index(x))
+        {
+        <b>case</b> NOTHING:
+            <b>switch</b> (index(y))
+            {
+            <b>case</b> NOTHING:
+                <b>return</b> 0;
+            <b>case</b> JUST:
+                <b>return</b> 1;
+            }
+        <b>case</b> JUST:
+            <b>switch</b> (index(y))
+            {
+            <b>case</b> NOTHING:
+                <b>return</b> -1;
+            <b>case</b> JUST:
+                <b>return</b> compare((T)x, (T)y);
+            }
+        }
+    }
+</pre>
+</p>
+<u><b>Example 2</b></u>
+
+<p>
+We can define a <tt>List</tt> type as follows:
+<pre>
+    <b>template</b> &lt;<b>typename</b> T&gt; <b>struct</b> ListNode;
+    <b>struct</b> ListEmpty;
+
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>using</b> List = F::<b>Union</b>&lt;ListNode&lt;T&gt;, ListEmpty&gt;;
+
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> ListNode
+    {
+        T elem;
+        List&lt;T&gt; next;
+    };
+
+    #<b>define</b> LIST_EMPTY List&lt;<b>void</b>&gt;::index&lt;ListEmpty&gt;()
+    #<b>define</b> LIST_NODE  List&lt;<b>void</b>&gt;::index&lt;ListNode&lt;<b>void</b>&gt;&gt;()
+</pre>
+</p>
+<p>
+We can calculate the length of a list as follows:
+<pre>
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>int</b> length(List&lt;T&gt; xs)
+    {
+        <b>int</b> len = 0;
+        <b>while</b> (<b>true</b>)
+        {
+            <b>switch</b> (index(xs))
+            {
+            <b>case</b> LIST_EMPTY:
+                <b>return</b> len;
+            <b>case</b> LIST_NODE:
+                len++;
+                <b>auto</b> &amp;node = (ListNode &amp;)xs;
+                xs = node.next;
+            }
+        }
+    }
+</pre>
+
+<hr>
+<a name="result"><h3>Result</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T<sub>1</sub>, ..., <b>typename</b> T<sub>n</sub>&gt;
+    <b>struct</b> <u><b>Result</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A specialized tuple of objects.
+Unlike the related <tt><u><b>Tuple</b></u></tt> type,
+a <tt><u><b>Result</b></u></tt> can be used to return multiple values from a
+function without relying on heap allocated memory.
+Furthermore, <tt><u><b>Result</b></u></tt> can be matched using C++17's
+<i>structure binding</i> feature:
+<pre>
+    <u><b>Result</b></u>&lt;<b>float</b>, <b>float</b>, <b>float</b>&gt; get_point_3D(...);
+    <b>auto</b> [x, y, z] = get_point_3D(...);
+</pre>
+This provides a convenient way to extract multiple return values from a
+function call.
+</p>
+<p>
+An object of type <tt><u><b>Result</b></u></tt> is not necessarily compact.
+</p>
+
+<hr>
+<a name="tuple"><h3>Tuple</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T<sub>1</sub>, ..., <b>typename</b> T<sub>n</sub>&gt;
+    <b>struct</b> <u><b>Tuple</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A tuple of objects.
+Unlike the related <tt><u><b>Result</b></u></tt> type, a
+a <tt><u><b>Tuple</b></u></tt> is a compact object and relies on heap
+allocation.
+</p>
+<p>
+See the documentation on <a href="tuple.html">tuple functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="optional"><h3>Optional</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> <u><b>Optional</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+An optional object that may or may not hold the underlying value.
+Unlike the related <tt><u><b>Maybe</b></u></tt> type, an
+<tt><u><b>Optional</b></u></tt> is not a compact object.
+</p>
+<p>
+See the documentation on <a href="value.html">value functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="maybe"><h3>Maybe</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>struct</b> Nothing
+    {
+        // Empty
+    };
+
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>using</b> <u><b>Maybe</b></u> = <b>Union</b>&lt;Nothing, T&gt;;
+
+    <b>enum</b>
+    {
+        NOTHING = <u><b>Maybe</b></u>&lt;<b>void</b>&gt;::index&lt;Nothing&gt;(),
+        JUST    = <u><b>Maybe</b></u>&lt;<b>void</b>&gt;::index&lt;<b>void</b>&gt;()
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A <q>maybe</q> type that may or may not hold a value.
+Unlike the related <tt><u><b>Optional</b></u></tt> type, a
+<tt><u><b>Maybe</b></u></tt> is a compact object and is more likely to rely on
+heap allocation.
+</p>
+<p>
+See the documentation on <a href="maybe.html">maybe functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="list"><h3>List</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>struct</b> Nil
+    {
+        // Empty
+    };
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> Node;
+
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>using</b> <u><b>List</b></u> = <b>Union</b>&lt;Nil, Node&lt;T&gt;&gt;;
+
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> Node
+    {
+        <u><b>Value</b></u>&lt;T&gt; elem;
+        <u><b>List</b></u>&lt;T&gt; next;
+    };
+
+    <b>enum</b>
+    {
+        NIL  = <u><b>List</b></u>&lt;<b>void</b>&gt;::index&lt;Nil&gt;(),
+        NODE = <u><b>List</b></u>&lt;<b>void</b>&gt;::index&lt;Node&lt;<b>void</b>&gt;&gt;()
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A (singularly-linked) list type.
+See the documentation on <a href="list.html">list functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="map"><h3>Map</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> K, <b>typename</b> V&gt;
+    <b>struct</b> <u><b>Map</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A key-value map type.
+See the documentation on <a href="map.html">map functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="set"><h3>Set</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> <u><b>Set</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A set type.
+See the documentation on <a href="set.html">set functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="vector"><h3>Vector</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>template</b> &lt;<b>typename</b> T&gt;
+    <b>struct</b> <u><b>Vector</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A vector type.
+See the documentation on <a href="vector.html">vector functions</a> for more
+information.
+</p>
+
+<hr>
+<a name="string"><h3>String</h3></a>
+
+<table border="1" cellpadding="10"><tr><td>
+<pre>
+<b>namespace</b> F
+{
+    <b>struct</b> <u><b>String</b></u>
+    {
+        ...
+    };
+}
+</pre>
+</td></tr></table>
+
+<p>
+A unicode string type.
+See the documentation on <a href="string.html">string functions</a> for more
+information.
+</p>
+</body>
+</html>

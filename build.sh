@@ -29,8 +29,17 @@ make bench
 
 cd ..
 
-for BASENAME in compare list map maybe show string tuple value vector
+for BASENAME in compare list map maybe "set" show string tuple value vector
 do
     examples/libf2html f${BASENAME}.h > doc/${BASENAME}.html
 done
+
+mkdir -p libf++-0.2/
+mkdir -p libf++-0.2/include/
+mkdir -p libf++-0.2/doc/
+cp *.h libf++-0.2/include/
+cp doc/*.html libf++-0.2/doc/
+cp libf++.so libf++-0.2/
+tar cvz --owner root --group root -f libf++-0.2.tar.gz libf++-0.2/
+rm -rf libf++-0.2/
 

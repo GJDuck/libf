@@ -48,8 +48,11 @@
 #define SUM_F_VECTOR        6
 #define SUM_F_LIST          7
 #define SUM_F_MAP           8
-#define SUM_STD_VECTOR      9
-#define SUM_STD_MAP         10
+#define SUM_F_FOLDL_VECTOR  9
+#define SUM_F_FOLDL_LIST    10
+#define SUM_F_FOLDL_MAP     11
+#define SUM_STD_VECTOR      12
+#define SUM_STD_MAP         13
 
 /*
  * Get the time in milliseconds.
@@ -190,6 +193,60 @@ void do_bench(FILE *stream, int bench, size_t start, size_t end, size_t tick)
                 assert(sum == sum0);
                 break;
             }
+            case SUM_F_FOLDL_VECTOR:
+            {
+                for (int i = 0; i < n; i++)
+                    t = F::push_back(t, i);
+                int sum = 0;
+                GC_disable();
+	            size_t t0 = get_time();
+                sum = F::foldl(t, sum, [] (int sum, size_t _, int x)
+                {
+                    return sum + x;
+                });
+	            size_t t1 = get_time();
+                GC_enable();
+                GC_gcollect();
+	            fprintf(stream, "%zu\n", t1 - t0);
+                assert(sum == sum0);
+                break;
+            }
+            case SUM_F_FOLDL_LIST:
+            {
+                for (int i = 0; i < n; i++)
+                    l = F::list(i, l);
+                int sum = 0;
+                GC_disable();
+	            size_t t0 = get_time();
+                sum = F::foldl(l, sum, [] (int sum, int x)
+                {
+                    return sum + x;
+                });
+	            size_t t1 = get_time();
+                GC_enable();
+                GC_gcollect();
+	            fprintf(stream, "%zu\n", t1 - t0);
+                assert(sum == sum0);
+                break;
+            }
+            case SUM_F_FOLDL_MAP:
+            {
+                for (int i = 0; i < n; i++)
+                    q = F::insert(q, F::tuple(i, i));
+                int sum = 0;
+                GC_disable();
+	            size_t t0 = get_time();
+                sum = F::foldl(q, sum, [] (int sum, F::Tuple<int, int> x)
+                {
+                    return sum + first(x);
+                });
+	            size_t t1 = get_time();
+                GC_enable();
+                GC_gcollect();
+	            fprintf(stream, "%zu\n", t1 - t0);
+                assert(sum == sum0);
+                break;
+            }
             case SUM_STD_VECTOR:
             {
                for (int i = 0; i < n; i++)
@@ -247,6 +304,12 @@ int main(int argc, char **argv)
         bench = SUM_F_LIST;
     else if (strcmp(argv[1], "sum_f_map") == 0)
         bench = SUM_F_MAP;
+    else if (strcmp(argv[1], "sum_f_foldl_vector") == 0)
+        bench = SUM_F_FOLDL_VECTOR;
+    else if (strcmp(argv[1], "sum_f_foldl_list") == 0)
+        bench = SUM_F_FOLDL_LIST;
+    else if (strcmp(argv[1], "sum_f_foldl_map") == 0)
+        bench = SUM_F_FOLDL_MAP;
     else if (strcmp(argv[1], "sum_std_vector") == 0)
         bench = SUM_STD_VECTOR;
     else if (strcmp(argv[1], "sum_std_map") == 0)

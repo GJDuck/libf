@@ -288,6 +288,8 @@ int main(int argc, char **argv)
                         F::string("<b><u>Maybe</u></b>&"));
                     line = F::replace_all(line, "Optional&",
                         F::string("<b><u>Optional</u></b>&"));
+                    line = F::replace_all(line, "Union&",
+                        F::string("<b><u>Union</u></b>&"));
                     line = F::replace_all(line, "Result&",
                         F::string("<b><u>Result</u></b>&"));
                     return line;
@@ -351,7 +353,7 @@ int main(int argc, char **argv)
         }
         out += "</p>\n";
     }
-    out += "<body>\n";
+    out += "</body>\n";
     out += "</html>\n";
 
     printf("%s\n", c_str(out));
