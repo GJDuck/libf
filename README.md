@@ -277,8 +277,14 @@ interface allows LibF iterators to be used in C++ range loops.
 Library Documentation:
 ----------------------
 
-* [LibF full documentation](https://www.comp.nus.edu.sg/~gregory/libf/doc/).
-
+* [LibF full documentation](https://www.comp.nus.edu.sg/~gregory/libf/doc/)
+* [List functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/list.html)
+* [Map functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/map.html)
+* [Set functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/set.html)
+* [Vector functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/vector.html)
+* [String functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/string.html)
+* [Tuple functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/tuple.html)
+* [Maybe functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/maybe.html)
 
 Examples:
 ----------
@@ -299,7 +305,7 @@ structures:
 
 Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
 LibF is constructing a linked-list `F::List`, followed by `F::Vector`.
-Constructing `F::map` has about twice the overhead as the mutable `std::map`
+Constructing `F::Map` has about twice the overhead as the mutable `std::map`
 counterpart.  Such results are expected (immutability has inherit costs).
 Note that these benchmarks assume that the garbage collector is disabled.
 Otherwise garbage collector overheads become a significant factor about the 3M
@@ -329,6 +335,15 @@ Under the Hood:
 The library implements polymorphic types using a variant of the ugly
 cast-everything-to-void idiom, as opposed to the more standard C++
 put-everything-in-the-header-file idiom.  This keeps binary size small.
+
+Issues:
+-------
+
+LibF is alpha/beta quality software.  There are likely to be some bugs and/or
+missing functions.
+
+If you would like to contribute, please send pull requests here:
+https://github.com/GJDuck/libf/pulls
 
 Building:
 ---------
