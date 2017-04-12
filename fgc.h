@@ -1,5 +1,5 @@
 /*
- * Copyright (c) The National University of Singapore.
+ * Copyright (c) 2017 The National University of Singapore.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -43,74 +43,6 @@ namespace F
 {
 
 /*
- * GC Sizes.
- */
-GC_INLINE size_t gc_size(void *_ptr)
-{
-    return GC_size(_ptr);
-}
-
-/*
- * GC tagged pointers.
- */
-GC_INLINE void *gc_settag(void *_ptr, uint32_t _tag)
-{
-    return (char *)_ptr + _tag;
-}
-GC_INLINE uint32_t gc_gettag(void *_ptr)
-{
-    return ((uint32_t)(uintptr_t)_ptr) & (GC_ALIGNMENT-1);
-}
-GC_INLINE void *gc_deltag(void *_ptr, uint32_t _tag)
-{
-    return (char *)_ptr - _tag;
-}
-GC_INLINE void *gc_striptag(void *_ptr)
-{
-    return (void *)((uintptr_t)_ptr & ~(GC_ALIGNMENT-1));
-}
-GC_INLINE void *gc_clobbertag(void *_ptr, uint32_t _tag)
-{
-    return (void *)gc_settag(gc_striptag(_ptr), _tag);
-}
-
-/*
- * GC base pointer.
- */
-GC_INLINE void *gc_base(void *_ptr)
-{
-    return GC_base(_ptr);
-}
-
-/*
- * GC enable/disable.
- */
-GC_INLINE void gc_disable(void)
-{
-    GC_disable();
-}
-GC_INLINE void gc_enable(void)
-{
-    GC_enable();
-}
-
-/*
- * GC initialization.
- */
-GC_INLINE void gc_init(void)
-{
-    GC_init();
-}
-
-/*
- * GC root registration.
- */
-GC_INLINE void gc_root(void *_ptr, size_t _size)
-{
-    GC_add_roots(_ptr, (char *)_ptr+_size+1);
-}
-
-/*
  * GC memory (de)allocation.
  */
 GC_INLINE void *gc_malloc(size_t _size)
@@ -124,14 +56,6 @@ GC_INLINE void *gc_malloc_atomic(size_t _size)
 GC_INLINE void gc_free(void *_ptr)
 {
     GC_free(_ptr);
-}
-
-/*
- * GC garbage collection.
- */
-GC_INLINE void gc_collect(void)
-{
-    GC_gcollect();
 }
 
 }           /* namesLpace F */
