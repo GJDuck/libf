@@ -278,13 +278,13 @@ Library Documentation:
 ----------------------
 
 * [LibF full documentation](https://www.comp.nus.edu.sg/~gregory/libf/doc/)
-* [List functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/list.html)
-* [Map functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/map.html)
-* [Set functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/set.html)
-* [Vector functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/vector.html)
-* [String functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/string.html)
-* [Tuple functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/tuple.html)
-* [Maybe functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/maybe.html)
+    * [List functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/list.html)
+    * [Map functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/map.html)
+    * [Set functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/set.html)
+    * [Vector functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/vector.html)
+    * [String functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/string.html)
+    * [Tuple functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/tuple.html)
+    * [Maybe functions](https://www.comp.nus.edu.sg/~gregory/libf/doc/maybe.html)
 
 Examples:
 ----------
