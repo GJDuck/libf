@@ -246,6 +246,12 @@ The interface to LibF iterators is the same as with standard C++, except `begin`
 and `end` are functions rather than object methods.  Using the standard
 interface allows LibF iterators to be used in C++ range loops.
 
+Library Documentation:
+----------------------
+
+* [LibF full documentation](https://www.comp.nus.edu.sg/~gregory/libf/doc/).
+
+
 Examples:
 ----------
 
@@ -282,11 +288,6 @@ C++ range loop, i.e.:
 Note that range loops use iterators, which are slower for LibF data structures
 compared to the mutable standard library counterparts.  The `foldl`
 alternatives are faster, but are less expressive in general.
-
-Library Documentation:
-----------------------
-
-For LibF documentation see the `doc` directory.
 
 Under the Hood:
 ---------------
