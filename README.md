@@ -306,7 +306,7 @@ structures:
 Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
 LibF is constructing a linked-list `F::List`, followed by `F::Vector`.
 Constructing `F::Map` has about twice the overhead as the mutable `std::map`
-counterpart.  Such results are expected (immutability has inherit costs).
+counterpart.  Such results are expected (immutability has inherent costs).
 Note that these benchmarks assume that the garbage collector is disabled.
 Otherwise garbage collector overheads become a significant factor about the 3M
 mark.
