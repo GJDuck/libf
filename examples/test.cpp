@@ -318,6 +318,8 @@ int main(void)
     TEST(verify(ys));
     TEST(verify(zs));
     TEST(verify(ws));
+    TEST(memcmp(F::data(ws), data, sizeof(data)) == 0);
+    TEST(memcmp(F::data(ws), F::data(xs), sizeof(data)) != 0);
     TEST(size(xs) == 300);
     TEST(size(ys) == size(string("Hello World!")));
     TEST(size(zs) == 3);

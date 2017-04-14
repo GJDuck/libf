@@ -41,6 +41,8 @@ namespace F
 {
 
 extern PURE _Seq _vector_init(const void *_a, size_t _size, size_t _len);
+extern PURE void *_vector_data(_Seq _s, size_t _size,
+	void (*_copy)(void *, Value<Word>));
 extern PURE _Seq _vector_push_back(_Seq _s, size_t _size, Value<Word> _elem);
 extern PURE _Seq _vector_pop_back(_Seq _s, size_t _size);
 extern PURE _Seq _vector_push_front(_Seq _s, size_t _size, Value<Word> _elem);
@@ -122,6 +124,23 @@ inline PURE Vector<_T> vector(List<_T> _xs)
         return _v;
     };
     return foldl(_xs, _v, _func_ptr);
+}
+
+/**
+ * Convert a vector into a C-array.
+ * O(n).
+ */
+template <typename _T>
+inline PURE const _T *data(Vector<_T> _v)
+{
+    void (*_copy)(void *, Value<Word>) =
+        [](void *_ptr, Value<Word> _elem0)
+    {
+        Value<_T> _elem1 = _bit_cast<Value<_T>>(_elem0);
+        const _T &_elem = _elem1;
+        *(_T *)_ptr = _elem;
+    };
+    return (const _T *)_vector_data(_v._impl, sizeof(_T), _copy);
 }
 
 /**

@@ -151,6 +151,44 @@ extern PURE _Seq _vector_init(const void *a, size_t size, size_t len)
 }
 
 /*
+ * Vector accumulate.
+ */
+static Value<Word> vector_data_accumulate(void *info0, Value<Word> arg,
+    size_t idx, _Frag frag)
+{
+    auto info1 = (Result<size_t, void (*)(void *, Value<Word>)> *)info0;
+    auto [size, copy] = *info1;
+    auto ptr0 = _bit_cast<Value<uint8_t *>>(arg);
+    uint8_t *ptr = ptr0;
+    VecData *vec = vec_data_from_frag(frag);
+    for (size_t i = 0; i < vec->header._len; i++)
+    {
+        Value<Word> elem = vec_get_value(vec, size, i);
+        copy(ptr + i * size, elem);
+    }
+    ptr0 = ptr + vec->header._len * size;
+    return _bit_cast<Value<Word>>(ptr0);
+}
+
+/*
+ * Vector data.
+ */
+extern PURE void *_vector_data(_Seq s, size_t size,
+    void (*copy)(void *, Value<Word>))
+{
+    size_t len = _seq_length(s);
+    void *ptr0 = (size < sizeof(void *)?
+        gc_malloc_atomic(len * size): gc_malloc(len * size));
+    Value<void *> ptr = ptr0;
+    Result<size_t, void (*)(void *, Value<Word>)> info = {size, copy};
+    Value<Word> end0 = _seq_foldl(s, _bit_cast<Value<Word>>(ptr),
+        vector_data_accumulate, &info);
+    Value<void *> end1 = _bit_cast<Value<void *>>(end0);
+    void *end = end1;
+    return (uint8_t *)end - (len * size);
+}
+
+/*
  * Push back.
  */
 extern PURE _Seq _vector_push_back(_Seq s, size_t size, Value<Word> elem)
