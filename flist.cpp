@@ -41,6 +41,28 @@ namespace F
 {
 
 /*
+ * Covert to C-array.
+ */
+extern PURE void *_list_data(List<Word> xs, size_t size,
+    void (*copy)(void *, Value<Word>))
+{
+    size_t len = _list_length(xs);
+	if (len == 0)
+		return nullptr;
+    void *ptr0 = (size < sizeof(void *)?
+        gc_malloc_atomic(len * size): gc_malloc(len * size));
+    uint8_t *ptr = (uint8_t *)ptr0;
+	while (!empty(xs))
+    {
+        const Node<Word> &node = xs;
+        copy(ptr, node.elem);
+        ptr += size;
+        xs = tail(xs);
+    }
+    return ptr0;
+}
+
+/*
  * Last.
  */
 extern PURE List<Word> _list_last(List<Word> xs)

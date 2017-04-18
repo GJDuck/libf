@@ -55,6 +55,8 @@ extern PURE List<char32_t> _string_list(_Seq s);
 /*
  * Low-level implementation.
  */
+extern PURE void *_list_data(List<Word> _xs, size_t _size,
+	void (*_copy)(void *, Value<Word>));
 extern PURE List<Word> _list_last(List<Word> _xs);
 extern PURE size_t _list_length(List<Word> _xs);
 extern PURE List<Word> _list_append(List<Word> _xs, List<Word> _ys);
@@ -140,6 +142,24 @@ inline PURE List<Tuple<_K, _V>> list(Map<_K, _V> _m)
 inline PURE List<char32_t> list(String _s)
 {
     return _string_list(_s._impl);
+}
+
+/**
+ * Convert a list into a C-array.
+ * O(n).
+ */
+template <typename _T>
+inline PURE const _T *data(List<_T> _xs)
+{
+    void (*_copy)(void *, Value<Word>) =
+        [](void *_ptr, Value<Word> _elem0)
+    {
+        Value<_T> _elem1 = _bit_cast<Value<_T>>(_elem0);
+        const _T &_elem = _elem1;
+        *(_T *)_ptr = _elem;
+    };
+	return (const _T *)_list_data(_bit_cast<List<Word>>(_xs), sizeof(_T),
+		_copy);
 }
 
 /**

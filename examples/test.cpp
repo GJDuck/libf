@@ -136,13 +136,6 @@ PURE String show(LIST<T> xs)
     return str;
 }
 
-template <typename T>
-void TEST_FIND_ALL(T xs)
-{
-    for (auto x: xs)
-        TEST(!empty(find(xs, x)));
-}
-
 /****************************************************************************/
 
 int main(void)
@@ -152,21 +145,33 @@ int main(void)
     auto xs = list<int>();
     for (int i = 30; i >= 0; i--)
         xs = list(i, xs);
+    const double data[] = {-1.1, 10.0, 3.222, -55.0, 3.2, 2.2, 0.00001};
+    auto ys = list<double>();
+    for (int i = sizeof(data) / sizeof(data[0]) - 1; i >= 0; i--)
+        ys = list(data[i], ys);
 
     printf("\n\33[33mxs = %s\33[0m\n", c_str(show(xs)));
+    printf("\n\33[33mys = %s\33[0m\n", c_str(show(ys)));
     TEST(index(list<int>()) == 0);
     TEST(size(list<int>()) == 0);
     TEST(empty(list<int>()));
     TEST(index(xs) == 1);
+    TEST(index(ys) == 1);
     TEST(!empty(xs));
+    TEST(!empty(ys));
     TEST(size(xs) == 31);
+    TEST(size(ys) == sizeof(data) / sizeof(data[0]));
     TEST(head(xs) == 0);
+    TEST(head(ys) == -1.1);
     TEST(size(tail(xs)) == 30);
     TEST(head(tail(xs)) == 1);
+    TEST(head(tail(ys)) == 10.0);
     TEST(last(xs) == 30);
+    TEST(last(ys) == 0.00001);
     TEST(size(take(xs, 2)) == 2);
     TEST(head(take(xs, 2)) == 0);
     TEST(last(take(xs, 2)) == 1);
+    TEST(memcmp(F::data(ys), data, sizeof(data)) == 0);
     TEST(size(take_while(xs, [] (int x) { return x <= 2; })) == 3);
     TEST(last(take_while(xs, [] (int x) { return x <= 2; })) == 2);
     TEST(size(append(xs, xs)) == 62);
@@ -174,15 +179,22 @@ int main(void)
     TEST(head(reverse(xs)) == last(xs));
     TEST(second(head(zip(xs, xs))) == head(xs));
     TEST(first(last(zip(xs, xs))) == last(xs));
+    TEST(second(head(zip(ys, xs))) == head(xs));
+    TEST(first(last(zip(ys, xs))) == last(ys));
     TEST(compare(sort(xs), xs) == 0);
+    TEST(head(sort(ys)) == -55.0);
+    TEST(last(sort(ys)) == 10.0);
     TEST(compare(sort(xs, [] (int x, int y) { return y-x; }),
         reverse(xs)) == 0);
     TEST(foldl(xs, true, [] (bool a, int x) { return (a && (x <= 30)); }));
     TEST(foldl(xs, 0, [] (int x, int y) { return x+y; }) == 465);
     TEST(foldl(xs, 0, [] (int x, int y) { return y; }) == 30);
+    TEST(foldl(ys, 100000.0, [] (double a, double x) { return (x < a? x: a); }) == -55.0);
     TEST(foldr(xs, 0, [] (int x, int y) { return y; }) == 0);
+    TEST(foldr(ys, 100000.0, [] (double a, double x) { return (x < a? x: a); }) == -55.0);
     TEST(({int sum = 0; for (int x: xs) sum += x; sum;}) == 465);
     TEST(last(map<int>(xs, [] (int x) { return x+1; })) == 31);
+    TEST(compare(map<int>(ys, [] (double x) { return (int)x; }), xs) != 0);
     TEST(size(filter(xs, [] (int x) { return x != 1 && x != 2; })) == 29);
     TEST(compare(xs, xs) == 0);
     TEST(compare(xs, tail(xs)) < 0);
@@ -211,6 +223,7 @@ int main(void)
     TEST(compare(string('X'), string("X")) == 0);
     TEST(size(str) == 76);
     TEST(size(append(str, str)) == 2 * size(str));
+    TEST(compare(string(c_str(str)), str) == 0);
     TEST(lookup(append(str, 'X'), 76) == 'X');
     TEST(lookup(append(str, "ABC123"), 76+3) == '1');
     TEST(size((str + str)) == 2 * size(str));
@@ -320,6 +333,10 @@ int main(void)
     TEST(verify(ws));
     TEST(memcmp(F::data(ws), data, sizeof(data)) == 0);
     TEST(memcmp(F::data(ws), F::data(xs), sizeof(data)) != 0);
+    TEST(compare(vector(F::data(xs), size(xs)), xs) == 0);
+    TEST(compare(vector(F::data(ys), size(ys)), ys) == 0);
+    TEST(compare(vector(F::data(zs), size(zs)), zs) == 0);
+    TEST(compare(vector(F::data(ws), size(ws)), ws) == 0);
     TEST(size(xs) == 300);
     TEST(size(ys) == size(string("Hello World!")));
     TEST(size(zs) == 3);
