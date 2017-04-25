@@ -72,7 +72,7 @@ inline PURE bool empty(Map<_K, _V> _m)
 }
 
 /**
- * Insert a key-valuue pair into a map.
+ * Insert a key-value pair into a map.
  * O(log(n)).
  */
 template <typename _K, typename _V>
