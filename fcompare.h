@@ -105,6 +105,60 @@ extern PURE int compare(float _x, float _y);
  */
 extern PURE int compare(double _x, double _y);
 
+/**
+ * Equality.
+ */
+template <typename _T>
+inline PURE bool operator ==(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) == 0);
+}
+
+/**
+ * Disequality.
+ */
+template <typename _T>
+inline PURE bool operator !=(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) != 0);
+}
+
+/**
+ * Greater-than.
+ */
+template <typename _T>
+inline PURE bool operator >(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) > 0);
+}
+
+/**
+ * Less-than.
+ */
+template <typename _T>
+inline PURE bool operator <(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) < 0);
+}
+
+/**
+ * Greater-than-or-equals.
+ */
+template <typename _T>
+inline PURE bool operator >=(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) >= 0);
+}
+
+/**
+ * Less-than-or-equals.
+ */
+template <typename _T>
+inline PURE bool operator <=(const _T &_x, const _T &_y)
+{
+    return (compare(_x, _y) <= 0);
+}
+
 }               /* namespace F */
 
 #endif          /* _FCOMPARE_H */

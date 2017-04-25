@@ -174,6 +174,12 @@ int main(void)
     TEST(memcmp(F::data(ys), data, sizeof(data)) == 0);
     TEST(size(take_while(xs, [] (int x) { return x <= 2; })) == 3);
     TEST(last(take_while(xs, [] (int x) { return x <= 2; })) == 2);
+    TEST(append(xs, xs) > xs);
+    TEST(!(append(xs, xs) == xs));
+    TEST(append(xs, xs) != xs);
+    TEST(!(append(xs, xs) < xs));
+    TEST(append(xs, xs) >= xs);
+    TEST(!(append(xs, xs) <= xs));
     TEST(size(append(xs, xs)) == 62);
     TEST(last(append(xs, xs)) == last(xs));
     TEST(head(reverse(xs)) == last(xs));
