@@ -2463,4 +2463,17 @@ extern const Value<Word> &_tree_itr_get(_TreeItr *itr)
     return tree_itr_get(itr);
 }
 
+extern void _tree_itr_copy(_TreeItr *dst, const _TreeItr *src)
+{
+    dst->_idx = src->_idx;
+    if (src->_ptr == 0)
+        dst->_state = src->_state;
+    else
+    {
+        _TreeItrEntry *stack = _bit_cast<_TreeItrEntry *>(src->_state);
+        dst->_state = _bit_cast<Value<Word>>(stack[0]._value);
+    }
+    dst->_ptr = 0;
+}
+
 }

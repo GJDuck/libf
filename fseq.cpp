@@ -2325,5 +2325,18 @@ extern Frag _seq_itr_get(_SeqItr *itr, size_t *idx_ptr)
     return f;
 }
 
+extern void _seq_itr_copy(_SeqItr *dst, const _SeqItr *src)
+{
+    dst->_idx = src->_idx;
+    if (src->_ptr == 0)
+        dst->_state = src->_state;
+    else
+    {
+        _SeqItrEntry *stack = _bit_cast<_SeqItrEntry *>(src->_state);
+        dst->_state = _bit_cast<Value<Word>>(stack[0]._value);
+    }
+    dst->_ptr = 0;
+}
+
 }
 

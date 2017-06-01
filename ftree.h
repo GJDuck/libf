@@ -87,6 +87,13 @@ extern PURE int _tree_compare(_Tree _t, _Tree u, void *_data,
     int (*_val_compare)(void *, Value<Word>, Value<Word>));
 extern PURE String _tree_show(_Tree _t, String (*_f)(Value<Word>));
 
+struct _TreeItr;
+
+extern void _tree_itr_begin(_TreeItr *_itr, _Tree _t);
+extern void _tree_itr_end(_TreeItr *_itr, _Tree _t);
+extern const Value<Word> &_tree_itr_get(_TreeItr *_itr);
+extern void _tree_itr_copy(_TreeItr *_dstitr, const _TreeItr *_srcitr);
+
 struct _TreeItrEntry
 {
     uint64_t _offset;
@@ -98,11 +105,29 @@ struct _TreeItr
     uint64_t _ptr:8;
     uint64_t _idx:56;
     Value<Word> _state;
-};
 
-extern void _tree_itr_begin(_TreeItr *_itr, _Tree _t);
-extern void _tree_itr_end(_TreeItr *_itr, _Tree _t);
-extern const Value<Word> &_tree_itr_get(_TreeItr *_itr);
+    _TreeItr()
+    {
+        _tree_itr_begin(this, _tree_empty());
+    }
+
+    _TreeItr(const _TreeItr &_itr)
+    {
+        _tree_itr_copy(this, &_itr);
+    }
+
+    _TreeItr(_TreeItr &&_itr) : _ptr(_itr._ptr), _idx(_itr._idx),
+        _state(_itr._state)
+    {
+
+    }
+
+    _TreeItr& operator=(const _TreeItr &_itr)
+    {
+        _tree_itr_copy(this, &_itr);
+        return *this;
+    }
+};
 
 inline PURE _TreeItr begin(_Tree _t)
 {

@@ -391,6 +391,15 @@ int main(void)
         split(xs, 3).fst) == 0);
     TEST(verify(show(xs)));
 
+    {
+        VectorItr<int> i = begin(xs);
+        VectorItr<int> j = i;
+        i += 100;
+        j += 10;
+        TEST(*i == 100);
+        TEST(*j == 10);
+    };
+
     for (int i = 0; i < 300; i++)
     {
         printf("(i = %d) ", i);
@@ -473,6 +482,16 @@ int main(void)
     TEST(({int sum = 0; for (auto t: m) sum += second(t); sum;}) == 2*199*100);
     TEST(second(get(find(map<int>(m, [] (Tuple<int, int> t) { return first(t); }), 43))) == 43);
     TEST(verify(show(m)));
+
+    {
+        MapItr<int, int> i = begin(m);
+        printf("%s\n", c_str(show(*i)));
+        MapItr<int, int> j = i;
+        i += 100;
+        j += 10;
+        TEST(*i == tuple(100, 200));
+        TEST(*j == tuple(10, 20));
+    };
 
     for (auto t: m)
     {

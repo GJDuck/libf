@@ -96,18 +96,43 @@ struct _SeqItrEntry
     Value<Word> _value;
 };
 
-struct _SeqItr
-{
-    uint64_t _ptr:8;
-    uint64_t _idx:56;
-    Value<Word> _state;
-};
+struct _SeqItr;
 
 extern void _seq_itr_begin(_SeqItr *_itr, _Seq _s);
 extern void _seq_itr_end(_SeqItr *_itr, _Seq _s);
 extern void _seq_itr_move(_SeqItr *_itr, ssize_t);
 extern _Frag _seq_itr_get(_SeqItr *_itr, size_t *idx_ptr);
 extern int _seq_itr_compare(const _SeqItr *_i, const _SeqItr *_j);
+extern void _seq_itr_copy(_SeqItr *_dstitr, const _SeqItr *_srcitr);
+
+struct _SeqItr
+{
+    uint64_t _ptr:8;
+    uint64_t _idx:56;
+    Value<Word> _state;
+
+    _SeqItr()
+    {
+        _seq_itr_begin(this, _seq_empty());
+    }
+
+    _SeqItr(const _SeqItr &_itr)
+    {
+        _seq_itr_copy(this, &_itr);
+    }
+
+    _SeqItr(_SeqItr &&_itr) : _ptr(_itr._ptr), _idx(_itr._idx),
+        _state(_itr._state)
+    {
+
+    }
+
+    _SeqItr &operator=(const _SeqItr &_itr)
+    {
+        _seq_itr_copy(this, &_itr);
+        return *this;
+    }
+};
 
 inline PURE _SeqItr begin(_Seq _s)
 {
