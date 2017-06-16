@@ -109,7 +109,7 @@ static String show_char(char c)
 
 extern PURE String show(unsigned char c)
 {
-    return append(show_char((char)c), 'u');
+    return show_char((char)c);
 }
 
 extern PURE String show(signed char c)
@@ -125,7 +125,7 @@ extern PURE String show(char c)
 extern PURE String show(short x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%hdh", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%hd", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -134,7 +134,7 @@ extern PURE String show(short x)
 extern PURE String show(unsigned short x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%huhu", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%hu", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -152,7 +152,7 @@ extern PURE String show(int x)
 extern PURE String show(unsigned x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%uu", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%u", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -161,7 +161,7 @@ extern PURE String show(unsigned x)
 extern PURE String show(long int x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%ldl", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%ld", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -170,7 +170,7 @@ extern PURE String show(long int x)
 extern PURE String show(unsigned long int x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%luul", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%lu", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -179,7 +179,7 @@ extern PURE String show(unsigned long int x)
 extern PURE String show(long long int x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%lldll", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%lld", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -188,7 +188,7 @@ extern PURE String show(long long int x)
 extern PURE String show(unsigned long long int x)
 {
     char buf[MAX_INT_BUF];
-    int r = snprintf(buf, sizeof(buf)-1, "%lluull", x);
+    int r = snprintf(buf, sizeof(buf)-1, "%llu", x);
     if (r <= 0 || r >= sizeof(buf)-1)
         error("snprintf failed");
     return string(buf);
@@ -196,7 +196,7 @@ extern PURE String show(unsigned long long int x)
 
 extern PURE String show(float x)
 {
-    return append(show_float((double)x), 'f');
+    return show_float((double)x);
 }
 
 extern PURE String show(double x)
