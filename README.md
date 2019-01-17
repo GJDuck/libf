@@ -303,7 +303,7 @@ structures:
 
 <p align="center">
 <img src="images/LibF_benchs1.png"
-     width="50%" alt="EffectiveSan object layout.">
+     alt="EffectiveSan object layout.">
 </p>
 
 Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
@@ -324,7 +324,7 @@ C++ range loop, i.e.:
 
 <p align="center">
 <img src="images/LibF_benchs2.png"
-     width="50%" alt="EffectiveSan object layout.">
+     alt="EffectiveSan object layout.">
 </p>
 
 Note that range loops use iterators, which are slower for LibF data structures
