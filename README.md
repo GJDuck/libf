@@ -301,7 +301,10 @@ Benchmarks:
 The following compares the time building various LibF and stdlib data
 structures:
 
-![Benchmarks1](http://comp.nus.edu.sg/~gregory/images/LibF_benchs1.png)
+<p align="center">
+<img src="images/LibF_benchs1.png"
+     width="50%" alt="EffectiveSan object layout.">
+</p>
 
 Unsurprisingly, constructing a `std::vector` is the fastest.  The fastest for
 LibF is constructing a linked-list `F::List`, followed by `F::Vector`.
@@ -319,7 +322,10 @@ C++ range loop, i.e.:
     for (auto x: xs) sum += x;
 ```
 
-![Benchmarks2](http://comp.nus.edu.sg/~gregory/images/LibF_benchs2.png)
+<p align="center">
+<img src="images/LibF_benchs2.png"
+     width="50%" alt="EffectiveSan object layout.">
+</p>
 
 Note that range loops use iterators, which are slower for LibF data structures
 compared to the mutable standard library counterparts.  The `foldl`
@@ -357,4 +363,14 @@ can be installed as follows on Linux:
 
 You will also need to install a recent version of the `clang++` compiler.  See
 [here](http://apt.llvm.org/) for more information.
+
+Retrospective:
+--------------
+
+Ideally, LibF should be written to support reference counting rather than
+relying on automatic garbage collection This would make the library more
+compatible with many C++ projects where using a GC is out-of-the-question.
+Such a change would require most of the contents of the library to be moved
+into the header files, which is not ideal, but is also the C++ way of doing
+things.
 
