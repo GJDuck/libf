@@ -374,3 +374,19 @@ Such a change would require most of the contents of the library to be moved
 into the header files, which is not ideal, but is also the C++ way of doing
 things.
 
+News (10th April 2026)
+======================
+
+This project underwent a major rewrite in 2025/2026.
+The new version:
+
+* Uses reference counting instead of a GC;
+* Uses finger trees as a universal abstraction for everything (vectors, sets, maps, strings); and
+* Uses a new persistent iterator model with value semantics.
+
+The last innovation (persistent iterators) has led to a publication in PLDI:
+
+* Yihe Li, Gregory J. Duck, *Persistent Iterators with Value Semantics*, Programming Language Design and Implementation (PLDI), 2026
+
+The new version and paper will be released shortly.
+
