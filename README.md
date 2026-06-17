@@ -364,29 +364,22 @@ can be installed as follows on Linux:
 You will also need to install a recent version of the `clang++` compiler.  See
 [here](http://apt.llvm.org/) for more information.
 
-Retrospective:
---------------
+News (June 2026)
+================
 
-Ideally, LibF should be written to support reference counting rather than
-relying on automatic garbage collection This would make the library more
-compatible with many C++ projects where using a GC is out-of-the-question.
-Such a change would require most of the contents of the library to be moved
-into the header files, which is not ideal, but is also the C++ way of doing
-things.
+This project underwent a **major rewrite** in 2025/2026 and the new version (libf++) is available here:
 
-News (10th April 2026)
-======================
+* [https://github.com/GJDuck/libfpp](https://github.com/GJDuck/libfpp)
 
-This project underwent a major rewrite in 2025/2026.
 The new version:
 
-* Uses reference counting instead of a GC;
-* Uses finger trees as a universal abstraction for everything (vectors, sets, maps, strings); and
-* Uses a new persistent iterator model with value semantics.
+* Uses *reference counting* instead of a GC;
+* Uses finger trees as a *universal abstraction* for all container types (vectors, sets, maps, strings); and
+* Introduced a new *persistent iterator* concept that uses *value semantics* over reference semantics.
 
 The last innovation (persistent iterators) has led to a publication in PLDI:
 
 * Yihe Li, Gregory J. Duck, *Persistent Iterators with Value Semantics*, Programming Language Design and Implementation (PLDI), 2026
 
-The new version and paper will be released shortly.
+The old version (this repo) should now be considered deprecated.
 
